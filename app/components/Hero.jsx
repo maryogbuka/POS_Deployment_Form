@@ -54,7 +54,7 @@ export default function Hero() {
           {/* Features */}
           <div className="grid md:grid-cols-3 text-gray-700 gap-8 max-w-6xl mx-auto text-center">
             <div className="flex flex-col items-center">
-              <Image src="/androidPos.png" 
+              <Image src="/androidPoS.png" 
               alt="Fast Settlement" 
               width={80} 
               height={80} 
