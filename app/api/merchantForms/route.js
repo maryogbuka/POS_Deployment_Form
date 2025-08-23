@@ -70,10 +70,12 @@ export async function POST(request) {
     `;
 
     // Build email object
+
     const msg = {
       to: [
-       "popetimehin@olivepayment.com",
+        "popetimehin@olivepayment.com",
         "it@olivemfb.com",
+        "samuel.francis@olivemfb.com",
         "eutuama@olivepayment.com",
         "ofavour@olivepayment.com",
         "oobinna@olivepayment.com",
@@ -87,6 +89,7 @@ export async function POST(request) {
     };
 
     // Process attachments if they exist
+
     if (formData.attachments && formData.attachments.length > 0) {
       msg.attachments = formData.attachments.map(attachment => ({
         content: attachment.content,

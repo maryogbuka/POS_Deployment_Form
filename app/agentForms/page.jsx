@@ -1,5 +1,5 @@
 'use client';
-
+import Link from 'next/link';
 import React, { useState } from 'react';
 import { generateApplicationPDF } from '@/utils/generatePdf';
 
@@ -69,6 +69,24 @@ export default function AgentForm() {
           ? prev.terminalLocation.filter((v) => v !== value)
           : [...prev.terminalLocation, value],
       }));
+      return;
+    }
+    // This Restricts NIN, BVN, Phone to digits only (max 11)
+    if (["idNumber", "bvn", "phone"].includes(name)) {
+      if (!/^\d*$/.test(value)) return; // only digits
+      if (value.length > 11) return;   // max 11
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      return;
+    }
+
+    // This formats money fields with commas but keeps raw number
+    if (["monthlyTurnover", "dailyCashLimit"].includes(name)) {
+      const raw = value.replace(/,/g, "");
+
+      
+      if (!/^\d*$/.test(raw)) return;
+      const formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      setFormData((prev) => ({ ...prev, [name]: formatted }));
       return;
     }
 
@@ -148,6 +166,8 @@ export default function AgentForm() {
         applicantEmail: formData.email,
         applicantPhone: formData.phone,
         submittedAt: new Date().toISOString(),
+        monthlyTurnover: formData.monthlyTurnover.replace(/,/g, ""),
+        dailyCashLimit: formData.dailyCashLimit.replace(/,/g, ""),
         attachments,
       };
 
@@ -212,14 +232,16 @@ export default function AgentForm() {
 
   return (
     <main className='bg-gray-100'>
-      <div className="max-w-4xl mx-auto pt-15 p-6 bg-white shadow-lg rounded-lg">
+      <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
         <div className="flex text-center mb-8">
+         <Link href="/">
           <img 
             src="/payLogo.png" 
             alt="Olive Payment Solutions Logo" 
             className="mb-6 w-24 items-start justify-self-start" 
           />
-          <h1 className="text-2xl text-gray-700 font-bold ml-25 text-green">
+        </Link>
+          <h1 className="text-2xl text-gray-700 font-bold ml-9 text-green">
             OLIVE PAYMENT SOLUTIONS LIMITED
             <p className="text-xl text-gray-700 font-semibold">
               POINT OF SALE (POS) AGENT APPLICATION FORM
@@ -336,9 +358,10 @@ export default function AgentForm() {
                   Means of Identification (NIN) *
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   name="idNumber"
                   value={formData.idNumber}
+                  maxLength={11}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                   placeholder="Enter your NIN number"
@@ -351,9 +374,10 @@ export default function AgentForm() {
                   BVN *
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   name="bvn"
                   value={formData.bvn}
+                  maxLength={11}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                   placeholder="Enter your Bank Verification Number"
@@ -366,9 +390,10 @@ export default function AgentForm() {
                   Phone Number *
                 </label>
                 <input
-                  type="tel"
+                  type="number"
                   name="phone"
                   value={formData.phone}
+                  maxLength={11}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                   placeholder="Enter your phone number"
@@ -582,12 +607,12 @@ export default function AgentForm() {
                     ₦
                   </span>
                   <input
-                    type="number"
+                    type="text"
                     name="monthlyTurnover"
                     value={formData.monthlyTurnover}
                     onChange={handleChange}
                     className="w-full pl-8 pr-3 py-2 border text-black border-gray-300 rounded-md"
-                    placeholder="Enter amount in NGN"
+                    placeholder="Enter amount"
                     required
                   />
                 </div>
@@ -602,12 +627,12 @@ export default function AgentForm() {
                     ₦
                   </span>
                   <input
-                    type="number"
+                    type="text"
                     name="dailyCashLimit"
                     value={formData.dailyCashLimit}
                     onChange={handleChange}
                     className="w-full pl-8 pr-3 py-2 border text-black border-gray-300 rounded-md"
-                    placeholder="Enter amount in NGN"
+                    placeholder="Enter amount"
                     required
                   />
                 </div>

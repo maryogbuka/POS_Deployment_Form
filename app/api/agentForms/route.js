@@ -85,12 +85,14 @@ export async function POST(request) {
     const msg = {
       to: [
         "popetimehin@olivepayment.com",
+        "samuel.francis@olivemfb.com",
         "it@olivemfb.com",
         "eutuama@olivepayment.com",
         "ofavour@olivepayment.com",
         "oobinna@olivepayment.com",
         "eani@olivepayment.com",
         "vike@olivepayment.com",
+      
       ],
       from: "olivemfb.ng@gmail.com",
       subject: "New POS Agent Application",

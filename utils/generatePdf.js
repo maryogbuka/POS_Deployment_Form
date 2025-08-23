@@ -15,10 +15,20 @@ export const generateApplicationPDF = async (formData, fileNames) => {
   
   // Build the PDF content
   pdfContainer.innerHTML = `
-    <div style="text-align: center; margin-bottom: 20px;">
-      <h1 style="font-size: 24px; margin-bottom: 5px; color: #0B3D3B;">OLIVE PAYMENT SOLUTIONS LIMITED</h1>
-      <h2 style="font-size: 18px; color: #555;">POINT OF SALE (POS) AGENT APPLICATION FORM</h2>
-    </div>
+   <div style="text-align: center; margin-bottom: 20px;">
+  <img 
+    src="/payLogo.png" 
+    alt="Olive Payment Solutions Logo" 
+    style="display: block; margin: 0 auto 10px auto; width: 100px; height: auto;" 
+  />
+  <h1 style="font-size: 24px; margin-bottom: 5px; color: #0B3D3B;">
+    OLIVE PAYMENT SOLUTIONS LIMITED
+  </h1>
+  <h2 style="font-size: 18px; color: #555;">
+    MERCHANT POS APPLICATION FORM
+  </h2>
+</div>
+
     
     <div style="margin-bottom: 15px;">
       <h3 style="font-size: 16px; border-bottom: 2px solid #0B3D3B; padding-bottom: 5px; color: #0B3D3B;">
@@ -160,10 +170,20 @@ export const generateMerchantPDF = async (formData, fileNames) => {
   
   // Build the PDF content
   pdfContainer.innerHTML = `
-    <div style="text-align: center; margin-bottom: 20px;">
-      <h1 style="font-size: 24px; margin-bottom: 5px; color: #0B3D3B;">OLIVE PAYMENT SOLUTIONS LIMITED</h1>
-      <h2 style="font-size: 18px; color: #555;">MERCHANT POS APPLICATION FORM</h2>
-    </div>
+  <div style="text-align: center; margin-bottom: 20px;">
+  <img 
+    src="/payLogo.png" 
+    alt="Olive Payment Solutions Logo" 
+    style="display: block; margin: 0 auto 10px auto; width: 100px; height: auto;" 
+  />
+  <h1 style="font-size: 24px; margin-bottom: 5px; color: #0B3D3B;">
+    OLIVE PAYMENT SOLUTIONS LIMITED
+  </h1>
+  <h2 style="font-size: 18px; color: #555;">
+    MERCHANT POS APPLICATION FORM
+  </h2>
+</div>
+
     
     <div style="margin-bottom: 15px;">
       <h3 style="font-size: 16px; border-bottom: 2px solid #0B3D3B; padding-bottom: 5px; color: #0B3D3B;">
