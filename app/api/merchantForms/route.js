@@ -72,11 +72,15 @@ export async function POST(request) {
     // Build email object
     const msg = {
       to: [
-        "mhycienth58@gmail.com",
+       "popetimehin@olivepayment.com",
         "it@olivemfb.com",
-        "ogbuka.maryann@olivemfb.com",
+        "eutuama@olivepayment.com",
+        "ofavour@olivepayment.com",
+        "oobinna@olivepayment.com",
+        "eani@olivepayment.com",
+        "vike@olivepayment.com",
       ],
-      from: "mhycienth58@gmail.com",
+      from: "olivemfb.ng@gmail.com",
       subject: "New Merchant POS Application",
       text: emailContent,
       html: emailContent.replace(/\n/g, "<br>"),
