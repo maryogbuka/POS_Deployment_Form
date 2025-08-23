@@ -1,20 +1,36 @@
+
+
 import { NextResponse } from "next/server";
 import sgMail from "@sendgrid/mail";
 
 export async function POST(request) {
+
+
+  // This is where we handle POST request to receive merchant form data and send email with details
+
   try {
     if (!process.env.SENDGRID_API_KEY) {
       console.error("SendGrid API key is missing");
+      
+      
       return NextResponse.json(
         { success: false, message: "Server configuration error" },
         { status: 500 }
       );
     }
 
+
+    // Set SendGrid API key
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+
+    // Get form data from request
     const formData = await request.json();
     console.log("Form data received:", Object.keys(formData));
+
+
 
     // Email content
     const emailContent = `
@@ -69,11 +85,16 @@ export async function POST(request) {
       Application submitted on: ${new Date().toLocaleString()}
     `;
 
-    // Build email object
+
+
+
+    // Email build section
+
     const msg = {
       to: [
-       "popetimehin@olivepayment.com",
+        "popetimehin@olivepayment.com",
         "it@olivemfb.com",
+        "samuel.francis@olivemfb.com",
         "eutuama@olivepayment.com",
         "ofavour@olivepayment.com",
         "oobinna@olivepayment.com",
@@ -86,7 +107,10 @@ export async function POST(request) {
       html: emailContent.replace(/\n/g, "<br>"),
     };
 
-    // Process attachments if they exist
+
+
+    // This is where we process attachments if they exist
+
     if (formData.attachments && formData.attachments.length > 0) {
       msg.attachments = formData.attachments.map(attachment => ({
         content: attachment.content,
@@ -96,23 +120,33 @@ export async function POST(request) {
       }));
     }
 
+
+    // This is where we log the email sending attempt
     console.log("Attempting to send email with attachments:", 
                 formData.attachments ? formData.attachments.length : 0);
 
+
+                // This is where we send the email
     await sgMail.send(msg);
     console.log("Email sent successfully!");
 
+    // Here is where we return the success response if email sending is successful
     return NextResponse.json({
       success: true,
       message: "Application submitted successfully!",
     });
-  } catch (error) {
+  } 
+  
+  // Here is where we catch and log any errors during the process
+  catch (error) {
     console.error("SendGrid error details:", error);
 
     if (error.response) {
       console.error("SendGrid response error:", error.response.body);
     }
 
+
+    // Here is where we return the error response if email sending fails
     return NextResponse.json(
       {
         success: false,

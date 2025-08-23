@@ -10,11 +10,13 @@ export default function Hero() {
  const [openMerchant, setOpenMerchant] = useState(false);
 
   return (
+    
+    
     <main>
       <section className="flex flex-col items-center px-4 text-center">
+        
         {/* Background */}
         <div className="fixed inset-0 -z-10 bg-gray-100"></div>
-
         {/* Hero section */}
         <h1 className="text-3xl md:text-5xl text-gray-700 font-bold mb-4">
           Every Payment, Made Easy
@@ -25,21 +27,25 @@ export default function Hero() {
           merchant, we make transactions easy anywhere in Nigeria.
         </p>
 
+        
+        
         {/* Buttons */}
         <div className="flex flex-col md:flex-row gap-4 justify-center">
           <Link href="/agentForms">
-            <button onClick={() => setOpenAgent(true)} className="px-6 py-3 bg-[#94BB0D] text-[#0B3D3B] rounded-xl hover:bg-green-700 transition">
+            <button onClick={() => setOpenAgent(true)} className="px-6 py-3 border border-[#0B3D3B] bg-[#d7d9d2] text-black rounded-xl hover:bg-green-700 hover:text-blue-50 transition">
               Apply as Agent
             </button>
           </Link>
 
           <Link href="/merchantForms">
-            <button onClick={() => setOpenMerchant(true)} className="px-6 py-3 bg-[#0B3D3B] text-[#94BB0D] rounded-xl hover:bg-green-700 transition">
+            <button onClick={() => setOpenMerchant(true)} className="px-6 py-3   bg-[#0B3D3B] text-[#d7d8d4] rounded-xl hover:bg-green-700 transition">
               Apply as Merchant
             </button>
           </Link>
         </div>
 
+        
+        
         {/* Why Choose Us Section */}
         <section className="pt-16">
           <h2 className="text-2xl md:text-4xl text-gray-700 font-bold text-center mb-10">
@@ -51,6 +57,7 @@ export default function Hero() {
             coverage.
           </p>
 
+          
           {/* Features */}
           <div className="grid md:grid-cols-3 text-gray-700 gap-8 max-w-6xl mx-auto text-center">
             <div className="flex flex-col items-center">
@@ -89,12 +96,16 @@ export default function Hero() {
           </div>
         </section>
 
+        
+        
         {/* Who Can Apply Section */}
         <section className="pt-16">
           <h2 className="text-2xl md:text-4xl text-gray-700 font-bold text-center mb-10">
             Who Can Apply?
           </h2>
           <div className="grid md:grid-cols-2 text-gray-700 gap-8 max-w-6xl mx-auto">
+            
+            
             {/* Agent */}
             <div className="bg-white p-6 rounded-2xl text-center shadow-lg">
               
@@ -111,6 +122,7 @@ export default function Hero() {
                 deposit and transfer money in your community.
               </p>
             </div>
+
             {/* Merchant */}
             <div className="bg-white p-6 rounded-2xl text-center shadow-lg">
               <Image src="/merchant.png" 

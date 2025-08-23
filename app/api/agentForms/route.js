@@ -1,8 +1,14 @@
-// app/api/agentForms/route.js
+
+
+
 import { NextResponse } from "next/server";
 import sgMail from "@sendgrid/mail";
 
 export async function POST(request) {
+  
+
+
+  // Initialize SendGrid
   try {
     if (!process.env.SENDGRID_API_KEY) {
       console.error("SendGrid API key is missing");
@@ -12,19 +18,30 @@ export async function POST(request) {
       );
     }
 
+
+    // Set SendGrid API key
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+    // Get form data from request
     const formData = await request.json();
     console.log("Form data received:", Object.keys(formData));
 
-    // Import the PDF generation function
-    const { generateApplicationPDF } = await import('@/utils/generatePdf');
     
-    // Generate PDF
+    
+    //This Imports the PDF generation function
+    const { generateApplicationPDF } = await import('@/utils/generatePdf');
+
+    
+    
+    //This Generates PDF
     let pdfBase64 = null;
+
+    
+    
     try {
-      // Create a mock document for the PDF generation (since we're in server-side)
-      // In a real implementation, you might need a different approach for server-side PDF generation
+      // This is to Create a mock document for the PDF generation and that's because we're in server-side
+
+      // In a real implementation, a different approach for server-side PDF generation would be needed
       const { JSDOM } = await import('jsdom');
       const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
       global.document = dom.window.document;
@@ -40,7 +57,7 @@ export async function POST(request) {
       console.error("PDF generation failed, sending data as text:", pdfError);
     }
 
-    // Email content
+    // Email content 
     const emailContent = `
       New Agent Application Received:
       
@@ -81,16 +98,20 @@ export async function POST(request) {
       Application submitted on: ${new Date().toLocaleString()}
     `;
 
-    // Build email object
+
+
+    // Email build section
     const msg = {
       to: [
         "popetimehin@olivepayment.com",
+        "samuel.francis@olivemfb.com",
         "it@olivemfb.com",
         "eutuama@olivepayment.com",
         "ofavour@olivepayment.com",
         "oobinna@olivepayment.com",
         "eani@olivepayment.com",
         "vike@olivepayment.com",
+      
       ],
       from: "olivemfb.ng@gmail.com",
       subject: "New POS Agent Application",
@@ -99,7 +120,10 @@ export async function POST(request) {
       attachments: [],
     };
 
-    // Add PDF attachment if generated successfully
+
+
+    // Here is where we add PDF attachment if generated successfully
+    
     if (pdfBase64) {
       msg.attachments.push({
         content: pdfBase64,
@@ -109,7 +133,9 @@ export async function POST(request) {
       });
     }
 
-    // Process file attachments if they exist
+    // This is where we process file attachments if they exist
+
+
     if (formData.attachments && formData.attachments.length > 0) {
       formData.attachments.forEach(attachment => {
         msg.attachments.push({
@@ -121,11 +147,16 @@ export async function POST(request) {
       });
     }
 
+
+
+    // This is where we Log the email sending attempt
     console.log("Attempting to send email with attachments:", msg.attachments.length);
 
+    // This is where we send the email
     await sgMail.send(msg);
     console.log("Email sent successfully!");
 
+    // Here is where we return the success response if email sending is successful
     return NextResponse.json({
       success: true,
       message: "Application submitted successfully!",
@@ -137,6 +168,8 @@ export async function POST(request) {
       console.error("SendGrid response error:", error.response.body);
     }
 
+
+    // Here is where we return the error response if email sending fails
     return NextResponse.json(
       {
         success: false,

@@ -1,5 +1,5 @@
 'use client';
-
+import Link from 'next/link';
 import React, { useState } from 'react';
 import { generateMerchantPDF } from '@/utils/generatePdf';
 
@@ -51,28 +51,16 @@ export default function MerchantForm() {
     tradeReferenceName: '',
     tradeReferencePhone: '',
     
-    // FOR OFFICIAL USE ONLY (not in form but in PDF)
-    applicationReceivedBy: '',
-    dateReceived: '',
-    verificationStatus: '',
-    comments: '',
-    approvingOfficerSignature: '',
-    approvalDate: '',
-    auditCheckSignature: '',
-    auditCheckDate: '',
-    
     // Files
     cacDocument: null,
     idDocument: null,
     proofOfAddress: null,
-    bankStatement: null,
   });
 
   const [fileNames, setFileNames] = useState({
     cacDocument: null,
     idDocument: null,
     proofOfAddress: null,
-    bankStatement: null,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,6 +71,7 @@ export default function MerchantForm() {
     const { name, value, type } = e.target;
 
     if (type === 'checkbox') {
+      
       if (name === 'posFeatures' || name === 'operatingPeriod') {
         const exists = formData[name].includes(value);
         setFormData((prev) => ({
@@ -94,6 +83,25 @@ export default function MerchantForm() {
         return;
       }
     }
+
+    // This Restricts NIN, BVN, Phone to digits only (max 11)
+
+    if (["businessPhone", "ownerPhone", "tradeReferencePhone", "bankReferencePhone", "ownerIdNo"].includes(name)) {
+      if (!/^\d*$/.test(value)) return; // only digits
+      if (value.length > 11) return;   // max 11
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      return;
+    }
+
+   // This formats money fields with commas but keeps raw number
+if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
+  const raw = value.replace(/,/g, "");
+  if (!/^\d*$/.test(raw)) return; // only digits
+  const formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  setFormData((prev) => ({ ...prev, [name]: formatted }));
+  return;
+}
+
 
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -111,6 +119,7 @@ export default function MerchantForm() {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
+       
         // remove "data:<mime>;base64,"
         const result = String(reader.result);
         const base64 = result.includes(',')
@@ -135,7 +144,7 @@ export default function MerchantForm() {
       content,
       disposition: 'attachment',
     };
-    // NOTE: this shape is what the backend forwards to SendGrid.
+    // NOTE: Maryann this shape is what the backend forwards to SendGrid.
   };
 
   const handleSubmit = async (e) => {
@@ -145,12 +154,17 @@ export default function MerchantForm() {
       setSubmitMessage('You must accept the Terms and Conditions to submit the application');
       return;
     }
-    
+    let website = formData.businessWebsite.trim();
+    if (website && !/^https?:\/\//i.test(website)) {
+    website = "https://" + website;
+}
+
     setIsSubmitting(true);
     setSubmitMessage('');
 
     try {
-      // Generate PDF first
+      //To Generate PDF first
+
       let pdfBase64 = null;
       try {
         pdfBase64 = await generateMerchantPDF(formData, fileNames);
@@ -159,15 +173,16 @@ export default function MerchantForm() {
         throw new Error("Failed to generate application PDF");
       }
 
-      // Build attachments array from the file inputs
+      // This is to Build attachments array from the file inputs
+
       const attachments = (await Promise.all([
         fileToAttachment(formData.cacDocument, 'cacDocument'),
         fileToAttachment(formData.idDocument, 'idDocument'),
         fileToAttachment(formData.proofOfAddress, 'proofOfAddress'),
-        fileToAttachment(formData.bankStatement, 'bankStatement'),
-      ])).filter(Boolean); // remove nulls
+      ])).filter(Boolean); 
 
       // Add PDF to attachments
+
       attachments.push({
         filename: `MerchantApplication_${formData.businessName || 'Unknown'}_${new Date().getTime()}.pdf`,
         type: 'application/pdf',
@@ -176,12 +191,15 @@ export default function MerchantForm() {
       });
 
       // Build JSON payload with minimal data since PDF contains all details
+
       const payload = {
         businessName: formData.businessName,
         businessEmail: formData.businessEmail,
         ownerName: formData.ownerName,
         ownerEmail: formData.ownerEmail,
         submittedAt: new Date().toISOString(),
+        monthlyTransactionVolume: formData.monthlyTransactionVolume.replace(/,/g, ""),
+        averageTransactionSize: formData.averageTransactionSize.replace(/,/g, ""),
         attachments,
       };
 
@@ -217,6 +235,7 @@ export default function MerchantForm() {
           ownerEmail: '',
           bankName: '',
           accountName: '',
+          accountNumber: '',
           accountType: '',
           posTerminalsNeeded: '',
           monthlyTransactionVolume: '',
@@ -224,6 +243,8 @@ export default function MerchantForm() {
           posFeatures: [],
           primaryUsageLocation: '',
           locationAddress: '',
+          relationshipManager: '',
+          relationshipManagerBranch: '',
           hasMultipleStores: '',
           additionalLocations: '',
           operatingPeriod: [],
@@ -231,24 +252,14 @@ export default function MerchantForm() {
           bankReferencePhone: '',
           tradeReferenceName: '',
           tradeReferencePhone: '',
-          applicationReceivedBy: '',
-          dateReceived: '',
-          verificationStatus: '',
-          comments: '',
-          approvingOfficerSignature: '',
-          approvalDate: '',
-          auditCheckSignature: '',
-          auditCheckDate: '',
           cacDocument: null,
           idDocument: null,
           proofOfAddress: null,
-          bankStatement: null,
         });
         setFileNames({
           cacDocument: null,
           idDocument: null,
           proofOfAddress: null,
-          bankStatement: null,
         });
         setAcceptedTerms(false);
       } else {
@@ -266,12 +277,14 @@ export default function MerchantForm() {
     <main className='bg-gray-100'>
     <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
       <div className="flex text-center mb-8">
-        <img 
-          src="/payLogo.png" 
-          alt="Olive Payment Solutions Logo" 
-          className="mb-6 w-24 items-start justify-self-start" 
-        />
-        <h1 className="text-2xl text-gray-700 font-bold ml-25 text-green">
+        <Link href="/">
+          <img 
+            src="/payLogo.png" 
+            alt="Olive Payment Solutions Logo" 
+            className="mb-6 w-24 items-start justify-self-start" 
+          />
+        </Link>
+        <h1 className="text-2xl text-gray-700 font-bold ml-9 text-green">
           OLIVE PAYMENT SOLUTIONS LIMITED
           <p className="text-xl text-gray-700 font-semibold">
             MERCHANT POS APPLICATION FORM
@@ -288,6 +301,7 @@ export default function MerchantForm() {
       <form onSubmit={handleSubmit} className="space-y-8">
         
         {/* BUSINESS INFORMATION SECTION */}
+
         <section className="border-b pb-6">
           <h3 className="text-lg font-bold text-gray-700 mb-4">
             BUSINESS INFORMATION
@@ -311,9 +325,10 @@ export default function MerchantForm() {
             </div>
             
             {/* Trading Name */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Trading Name (If different)
+                Trading Name *
               </label>
               <input
                 type="text"
@@ -322,10 +337,12 @@ export default function MerchantForm() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                 placeholder="Enter trading name"
+                required
               />
             </div>
             
             {/* Business Address */}
+
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Business Address *
@@ -342,6 +359,7 @@ export default function MerchantForm() {
             </div>
             
             {/* City/Town */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 City/Town *
@@ -358,6 +376,7 @@ export default function MerchantForm() {
             </div>
             
             {/* State */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 State *
@@ -374,6 +393,7 @@ export default function MerchantForm() {
             </div>
             
             {/* L.G.A */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 L.G.A *
@@ -390,15 +410,17 @@ export default function MerchantForm() {
             </div>
             
             {/* Business Phone */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number *
+                Business Phone Number *
               </label>
               <input
-                type="tel"
+                type="number"
                 name="businessPhone"
                 value={formData.businessPhone}
                 onChange={handleChange}
+                maxLength={11}
                 className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                 placeholder="Enter business phone number"
                 required
@@ -408,7 +430,7 @@ export default function MerchantForm() {
             {/* Business Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address *
+                Business Email Address *
               </label>
               <input
                 type="email"
@@ -427,7 +449,7 @@ export default function MerchantForm() {
                 Business Website
               </label>
               <input
-                type="url"
+                type="text"
                 name="businessWebsite"
                 value={formData.businessWebsite}
                 onChange={handleChange}
@@ -450,9 +472,9 @@ export default function MerchantForm() {
               >
                 <option value="">Select business type</option>
                 <option value="Retail">Retail</option>
-                <option value="Wholesale">Wholesale</option>
-                <option value="Service">Service</option>
+                <option value="Services">Services</option>
                 <option value="Hospitality">Hospitality</option>
+                <option value="E-commerce">E-commerce</option>
                 <option value="Other">Other</option>
               </select>
             </div>
@@ -475,7 +497,7 @@ export default function MerchantForm() {
             {/* TIN */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                TIN
+                TIN (Tax Identification Number)
               </label>
               <input
                 type="text"
@@ -512,10 +534,12 @@ export default function MerchantForm() {
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
             {/* Owner Name */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Name *
+                Full Name *
               </label>
               <input
                 type="text"
@@ -529,9 +553,10 @@ export default function MerchantForm() {
             </div>
             
             {/* Owner Title */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Title *
+                Title/Position *
               </label>
               <input
                 type="text"
@@ -545,15 +570,17 @@ export default function MerchantForm() {
             </div>
            
             {/* Owner Phone */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Phone Number *
               </label>
               <input
-                type="tel"
+                type="number"
                 name="ownerPhone"
                 value={formData.ownerPhone}
                 onChange={handleChange}
+                maxLength={11}
                 className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                 placeholder="Enter phone number"
                 required
@@ -563,13 +590,14 @@ export default function MerchantForm() {
             {/* Owner ID Number */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                ID No *
+                ID Number *
               </label>
               <input
-                type="text"
+                type="number"
                 name="ownerIdNo"
                 value={formData.ownerIdNo}
                 onChange={handleChange}
+                maxLength={11}
                 className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                 placeholder="Enter ID number"
                 required
@@ -592,9 +620,44 @@ export default function MerchantForm() {
               />
             </div>
           </div>
+
+          {/* Business Owner Signature */}
+
+            <div>
+              <label className="block text-sm font-medium pt-5 text-gray-700 mb-1">
+                Business Owner Signature *
+              </label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
+                <div className="space-y-1 text-center">
+                  <div className="flex text-sm text-gray-600">
+                    <label className="relative cursor-pointer bg-white rounded-md font-bold text-[#0B3D3B] hover:text-green-500">
+                      <span>Upload signature</span>
+                      <input
+                        type="file"
+                        name="proofOfAddress"
+                        onChange={handleFileChange}
+                        className="sr-only"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        required
+                      />
+                    </label>
+                    <p className="pl-1">or drag and drop</p>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    PDF, JPG, PNG up to 5MB
+                  </p>
+                  {fileNames.proofOfAddress && (
+                    <p className="text-sm text-[#0B3D3B] mt-2">
+                      ✓ {fileNames.proofOfAddress}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
         </section>
 
         {/* BANK ACCOUNT INFORMATION SECTION */}
+
         <section className="border-b pb-6">
           <h3 className="text-lg font-bold text-gray-700 mb-4">
             BANK ACCOUNT INFORMATION
@@ -602,23 +665,8 @@ export default function MerchantForm() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            {/* Bank Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bank Name *
-              </label>
-              <input
-                type="text"
-                name="bankName"
-                value={formData.bankName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter bank name"
-                required
-              />
-            </div>
-            
             {/* Account Name */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Account Name *
@@ -634,7 +682,28 @@ export default function MerchantForm() {
               />
             </div>
             
+
+            {/* Account Number */}
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Account Number *
+              </label>
+              <input
+                type="text"
+                name="accountNumber"
+                value={formData.accountNumber}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                placeholder="Enter account number"
+                required
+              />
+            </div>
+            
+
+
             {/* Account Type */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Account Type *
@@ -647,14 +716,16 @@ export default function MerchantForm() {
                 required
               >
                 <option value="">Select account type</option>
-                <option value="Current">Current</option>
                 <option value="Savings">Savings</option>
+                <option value="Current">Current</option>
+                <option value="Corporate">Corporate</option>
               </select>
             </div>
           </div>
         </section>
 
         {/* POS REQUIREMENT SECTION */}
+
         <section className="border-b pb-6">
           <h3 className="text-lg font-bold text-gray-700 mb-4">
             POS REQUIREMENT
@@ -663,9 +734,10 @@ export default function MerchantForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* POS Terminals Needed */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                No of POS Terminals Needed *
+                Number of POS Terminals Needed *
               </label>
               <input
                 type="number"
@@ -680,27 +752,29 @@ export default function MerchantForm() {
             </div>
             
             {/* Monthly Transaction Volume */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Expected Monthly Transaction Volume [N] *
+                Expected Monthly Transaction Volume *
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
                   ₦
                 </span>
                 <input
-                  type="number"
+                  type="text"
                   name="monthlyTransactionVolume"
                   value={formData.monthlyTransactionVolume}
                   onChange={handleChange}
                   className="w-full pl-8 pr-3 py-2 border text-black border-gray-300 rounded-md"
-                  placeholder="Enter amount in NGN"
+                  placeholder="Enter amount"
                   required
                 />
               </div>
             </div>
             
             {/* Average Transaction Size */}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Expected Average Transaction Size *
@@ -710,24 +784,25 @@ export default function MerchantForm() {
                   ₦
                 </span>
                 <input
-                  type="number"
+                  type="text"
                   name="averageTransactionSize"
                   value={formData.averageTransactionSize}
                   onChange={handleChange}
                   className="w-full pl-8 pr-3 py-2 border text-black border-gray-300 rounded-md"
-                  placeholder="Enter amount in NGN"
+                  placeholder="Enter amount"
                   required
                 />
               </div>
             </div>
             
-            {/* Preferred POS Features */}
+              {/* Preferred POS Features */}
+
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 PREFERRED POS FEATURES (SELECT ALL THAT APPLY)
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                {['Contactless Payment', 'Mobile payment (NFC, QR code)', 'Receipt printing', 'Inventory Management'].map((feature) => (
+                {['Contactless Payment', 'Mobile payment (NFC, QR code)', 'Card Payments', 'Transfer Services', 'Bill Payments', 'Airtime Purchase', 'Cash Withdrawal', 'Balance Inquiry', 'Receipt printing', 'Inventory Management'].map((feature) => (
                   <label key={feature} className="flex items-center">
                     <input
                       type="checkbox"
@@ -754,9 +829,45 @@ export default function MerchantForm() {
               </div>
             </div>
           </div>
+
+
+           {/** Customer Debit Consent */}
+         <div className="mb-4 pt-5">
+           <label className="block text-sm font-medium text-gray-700 mb-2">
+            Do you authorize us to debit your account with the sum of <strong> ₦21,500</strong> for the POS purchase?
+          </label>
+          <div className="flex items-center space-x-4">
+            <label className="flex text-gray-700 items-center">
+              <input
+                type="radio"
+                name="debitConsent"
+                value="yes"
+                checked={formData.debitConsent === "yes"}
+                onChange={handleChange}
+                className="mr-2"
+                required
+              />
+              Yes
+            </label>
+            <label className="flex text-gray-700 items-center">
+              <input
+                type="radio"
+                name="debitConsent"
+                value="no"
+                checked={formData.debitConsent === "no"}
+                onChange={handleChange}
+                className="mr-2"
+                required
+              />
+              No
+            </label>
+          </div>
+        </div>
+
         </section>
 
         {/* LOCATION INFORMATION SECTION */}
+
         <section className="border-b pb-6">
           <h3 className="text-lg font-bold text-gray-700 mb-4">
             LOCATION INFORMATION
@@ -767,27 +878,23 @@ export default function MerchantForm() {
             {/* Primary Place of Usage */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Primary place of usage (POS) *
+                Primary Place of Usage *
               </label>
-              <select
+              <input
+                type="text"
                 name="primaryUsageLocation"
                 value={formData.primaryUsageLocation}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                placeholder="Enter primary usage location"
                 required
-              >
-                <option value="">Select usage location</option>
-                <option value="Store">Store</option>
-                <option value="Office">Office</option>
-                <option value="Market">Market</option>
-                <option value="Shopping Mall">Shopping Mall</option>
-              </select>
+              />
             </div>
             
             {/* Location Address */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Address *
+                Location Address *
               </label>
               <input
                 type="text"
@@ -803,40 +910,40 @@ export default function MerchantForm() {
             {/* Has Multiple Stores */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Do you have multiple stores? *
+                Do you have multiple stores/locations? *
               </label>
               <div className="flex space-x-4 mt-2">
                 <label className="inline-flex items-center">
                   <input
                     type="radio"
                     name="hasMultipleStores"
-                    value="Yes"
-                    checked={formData.hasMultipleStores === 'Yes'}
+                    value="YES"
+                    checked={formData.hasMultipleStores === 'YES'}
                     onChange={handleChange}
                     className="text-green-600"
                     required
                   />
-                  <span className="ml-2 text-gray-700">Yes</span>
+                  <span className="ml-2 text-gray-700">YES</span>
                 </label>
                 <label className="inline-flex items-center">
                   <input
                     type="radio"
                     name="hasMultipleStores"
-                    value="No"
-                    checked={formData.hasMultipleStores === 'No'}
+                    value="NO"
+                    checked={formData.hasMultipleStores === 'NO'}
                     onChange={handleChange}
                     className="text-green-600"
                   />
-                  <span className="ml-2 text-gray-700">No</span>
+                  <span className="ml-2 text-gray-700">NO</span>
                 </label>
               </div>
             </div>
             
             {/* Additional Locations */}
-            {formData.hasMultipleStores === 'Yes' && (
+            {formData.hasMultipleStores === 'YES' && (
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  If yes, please provide address of additional locations
+                  Additional Locations
                 </label>
                 <textarea
                   name="additionalLocations"
@@ -852,10 +959,10 @@ export default function MerchantForm() {
             {/* Operating Period */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Operating Period? *
+                Operating Period (Select all that apply) *
               </label>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
-                {['Weekdays', 'Weekends', 'Both'].map((period) => (
+                {['Weekdays', 'Weekends', '24/7'].map((period) => (
                   <label key={period} className="flex items-center">
                     <input
                       type="checkbox"
@@ -877,14 +984,14 @@ export default function MerchantForm() {
         {/* REFERENCES SECTION */}
         <section className="border-b pb-6">
           <h3 className="text-lg font-bold text-gray-700 mb-4">
-            REFERENCE
+            REFERENCES
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Bank Reference Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bank reference contact name *
+                Bank Reference Contact Name *
               </label>
               <input
                 type="text"
@@ -900,10 +1007,10 @@ export default function MerchantForm() {
             {/* Bank Reference Phone */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bank reference Phone No *
+                Bank Reference Phone Number *
               </label>
               <input
-                type="tel"
+                type="number"
                 name="bankReferencePhone"
                 value={formData.bankReferencePhone}
                 onChange={handleChange}
@@ -916,7 +1023,7 @@ export default function MerchantForm() {
             {/* Trade Reference Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Trade reference (other business partner) contact name *
+                Trade Reference Contact Name *
               </label>
               <input
                 type="text"
@@ -932,10 +1039,10 @@ export default function MerchantForm() {
             {/* Trade Reference Phone */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Trade reference phone no *
+                Trade Reference Phone Number *
               </label>
               <input
-                type="tel"
+                type="number"
                 name="tradeReferencePhone"
                 value={formData.tradeReferencePhone}
                 onChange={handleChange}
@@ -958,7 +1065,7 @@ export default function MerchantForm() {
             {/* CAC Document */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                CAC Registration Document
+                CAC Registration Document *
               </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
                 <div className="space-y-1 text-center">
@@ -990,7 +1097,7 @@ export default function MerchantForm() {
             {/* ID Document */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Attach ID Document *
+                Valid ID Document *
               </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
                 <div className="space-y-1 text-center">
@@ -1051,40 +1158,7 @@ export default function MerchantForm() {
                   )}
                 </div>
               </div>
-            </div>
-            
-            {/* Bank Statement */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Recent Bank Statement (3 months) *
-              </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
-                <div className="space-y-1 text-center">
-                  <div className="flex text-sm text-gray-600">
-                    <label className="relative cursor-pointer bg-white rounded-md font-bold text-[#0B3D3B] hover:text-green-500">
-                      <span>Upload file</span>
-                      <input
-                        type="file"
-                        name="bankStatement"
-                        onChange={handleFileChange}
-                        className="sr-only"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        required
-                      />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    PDF, JPG, PNG up to 5MB
-                  </p>
-                  {fileNames.bankStatement && (
-                    <p className="text-sm text-[#0B3D3B] mt-2">
-                      ✓ {fileNames.bankStatement}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+            </div>            
           </div>
         </section>
 
@@ -1095,8 +1169,11 @@ export default function MerchantForm() {
           </h3>
           
           <div className="bg-gray-50 p-4 rounded-md max-h-96 overflow-y-auto mb-4">
-            <h4 className="font-bold text-gray-700 mb-2">AGREEMENT AND ACKNOWLEDGMENT</h4>
+             <p className="font-semibold text-gray-700">Effective Date: {new Date().toLocaleDateString()}</p>
+
+            <h4 className="font-bold text-gray-700 mt-2 mb-2">AGREEMENT AND ACKNOWLEDGMENT</h4>
             <p className="text-sm text-gray-600 mb-4">
+              
               By using OlivePay's POS system, you, the Merchant, agree to comply with these Terms and
               Conditions. Please read carefully, as these terms form a binding legal agreement between you
               and OlivePay.
@@ -1199,12 +1276,79 @@ export default function MerchantForm() {
             </label>
           </div>
         </section>
-        
+
+
+
+        {/* Introducer Branch */}
+         <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Relationship Manager Branch (if any) *
+              </label>
+              <select
+                name="relationshipManagerBranch"
+                value={formData.relationshipManagerBranch}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                required
+              >
+                <option value="">None</option>
+                <option value="Retail">Head Office</option>
+                <option value="Services">Abuja</option>
+                <option value="Hospitality">Victoria Island</option>
+                <option value="E-commerce">Enugu</option>
+                <option value="E-commerce">Aba</option>
+                <option value="E-commerce">Umuahia</option>
+               
+
+              </select>
+            </div>
+
+
+       {/* Introducer Name */}
+              <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+               Relationship Manager (if any) *
+              </label>
+              <select
+                name="introducerName"
+                value={formData.introducerName}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                required
+              >
+                <option value="">None</option>
+                <option value="Retail">ADEBISI OGUNSOLA</option>
+                <option value="Services">Abdulhafiz Usman</option>
+                <option value="Hospitality">Anthony Ajana</option>
+                <option value="E-commerce">Anthony peace chidubem</option>
+                <option value="E-commerce">Ayodele Owolabim</option>
+                <option value="E-commerce">Chinedu Nnonah</option>
+                <option value="E-commerce">Dominic Isisoma Okiah</option>
+                <option value="E-commerce">Emmanuel Oluwaseun Chukwuma</option>
+                <option value="E-commerce">Folajimi Odulana</option>
+                <option value="E-commerce">George Oghale Eriwona</option>
+                <option value="E-commerce">Glory chibroma Chinda</option>
+                <option value="E-commerce">Haliru Muhammad Lawal</option>
+                <option value="E-commerce">Ibrahim Musa</option>
+                <option value="E-commerce">Ifeanyi Kinsley Ogah</option>
+                <option value="E-commerce">Ikenna Azoribe</option>
+                <option value="E-commerce">Ikwuagwu Oluchi</option>
+                <option value="E-commerce">Iria Adeyemi</option>
+                <option value="E-commerce">Maclean Wokoh</option>
+                <option value="E-commerce">Nkeiruka Onyezewe</option>
+                <option value="E-commerce">Ogechi Ukaegbu</option>
+                <option value="Other">Onyeka David Chima</option>
+                <option value="Other">SAMUEL AJOSE</option>
+                <option value="Other">Uche Ugochi</option>
+                <option value="Other">Victory Emenike</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
         {/* Submit Button */}
         <div className="mt-8 text-center">
           <button
             type="submit"
-            className="px-6 py-3 bg-[#0B3D3B] text-[#94BB0D] font-medium rounded-md"
+            className="px-6 py-3 bg-[#0B3D3B] text-[#d7d8d4] font-medium rounded-md"
           >
             {isSubmitting ? 'SUBMITTING...' : 'SUBMIT APPLICATION'}
           </button>

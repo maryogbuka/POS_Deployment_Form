@@ -1,5 +1,5 @@
 'use client';
-
+import Link from 'next/link';
 import React, { useState } from 'react';
 import { generateApplicationPDF } from '@/utils/generatePdf';
 
@@ -19,6 +19,7 @@ export default function AgentForm() {
     address: '',
 
     // Business Information
+    accountNumber: '',
     businessName: '',
     businessAddress: '',
     businessType: '',
@@ -31,6 +32,11 @@ export default function AgentForm() {
     // Financial Information
     monthlyTurnover: '',
     dailyCashLimit: '',
+
+    // POS Requirements
+    posTerminalsNeeded: '', 
+    posFeatures: [],
+    operatingPeriod: [],
 
     // Infrastructure
     terminalLocation: [],
@@ -61,26 +67,50 @@ export default function AgentForm() {
   const handleChange = (e) => {
     const { name, value, type } = e.target;
 
-    if (type === 'checkbox' && name === 'terminalLocation') {
-      const exists = formData.terminalLocation.includes(value);
+    if (type === 'checkbox' && (name === 'terminalLocation' || name === 'posFeatures' || name === 'operatingPeriod')) {
+      const exists = formData[name].includes(value);
       setFormData((prev) => ({
         ...prev,
-        terminalLocation: exists
-          ? prev.terminalLocation.filter((v) => v !== value)
-          : [...prev.terminalLocation, value],
+        [name]: exists
+          ? prev[name].filter((v) => v !== value)
+          : [...prev[name], value],
       }));
       return;
     }
 
+    // This Restricts NIN, BVN, Phone to digits only (max 11)
+    if (["idNumber", "bvn", "phone"].includes(name)) {
+      if (!/^\d*$/.test(value)) return; // only digits
+      if (value.length > 11) return;   // max 11
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      return;
+    }
+
+    // This formats money fields with commas but keeps raw number
+    if (["monthlyTurnover", "dailyCashLimit"].includes(name)) {
+      const raw = value.replace(/,/g, "");
+
+      // This ensures the value is a valid number
+      if (!/^\d*$/.test(raw)) return;
+      const formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      setFormData((prev) => ({ ...prev, [name]: formatted }));
+      return;
+    }
+    // This updates the form data for all other fields
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+
+  // This is where we handle file changes
   const handleFileChange = (e) => {
     const { name, files } = e.target;
     const file = files?.[0] || null;
     setFormData((prev) => ({ ...prev, [name]: file }));
     setFileNames((prev) => ({ ...prev, [name]: file ? file.name : null }));
   };
+
+
+// // This is where we handle errors during file conversion
 
   const toBase64 = (file) =>
     new Promise((resolve, reject) => {
@@ -93,15 +123,21 @@ export default function AgentForm() {
           : result;
         resolve(base64);
       };
+
+      // This is where we handle errors during file conversion
       reader.onerror = (err) => reject(err);
     });
 
+
+    // This is where we create the attachment object
   const fileToAttachment = async (file, fallbackName) => {
     if (!file) return null;
     const max = 5 * 1024 * 1024;
     if (file.size > max) {
       throw new Error(`${file.name || fallbackName} is larger than 5MB`);
     }
+
+    // This is where we convert the file to base64
     const content = await toBase64(file);
     return {
       filename: file.name || fallbackName,
@@ -111,6 +147,7 @@ export default function AgentForm() {
     };
   };
 
+// This is where we handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -119,6 +156,10 @@ export default function AgentForm() {
     try {
       // Generate PDF first
       let pdfBase64 = null;
+      
+      
+      
+      // This is where we handle PDF generation
       try {
         pdfBase64 = await generateApplicationPDF(formData, fileNames);
       } catch (pdfError) {
@@ -126,7 +167,9 @@ export default function AgentForm() {
         throw new Error("Failed to generate application PDF");
       }
 
-      // Build attachments array from the four file inputs
+
+
+      // This is where we build attachments array from the four file inputs
       const attachments = (await Promise.all([
         fileToAttachment(formData.idProof, 'idProof'),
         fileToAttachment(formData.addressProof, 'addressProof'),
@@ -134,31 +177,40 @@ export default function AgentForm() {
         fileToAttachment(formData.signature, 'signature'),
       ])).filter(Boolean); 
 
-      // Add PDF to attachments
+
+
+      // This is where we add PDF to attachments
       attachments.push({
         filename: `AgentApplication_${formData.fullName || 'Unknown'}_${new Date().getTime()}.pdf`,
         type: 'application/pdf',
         content: pdfBase64,
         disposition: 'attachment'
       });
-     
-      // Only send minimal data in the payload, the PDF contains all form data
+
+      // This is where we only send minimal data in the payload, the PDF contains all form data
       const payload = {
         applicantName: formData.fullName,
         applicantEmail: formData.email,
         applicantPhone: formData.phone,
         submittedAt: new Date().toISOString(),
+        monthlyTurnover: formData.monthlyTurnover.replace(/,/g, ""),
+        dailyCashLimit: formData.dailyCashLimit.replace(/,/g, ""),
         attachments,
       };
 
+
+      // This is where we send the form data to the server
       const res = await fetch('/api/agentForms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
+      // This is where we handle the server response
       const result = await res.json();
 
+
+     
       if (res.ok && result.success) {
         setSubmitMessage('Application submitted successfully!');
         setFormData({
@@ -186,23 +238,39 @@ export default function AgentForm() {
           terminalLocation: [],
           electricitySupply: '',
           backupPower: '',
+          accountNumber: '',
           date: '',
-          introducerName: '',
+          posTerminalsNeeded: '',
+          posFeatures: [],
+          operatingPeriod: [],
+          existingAgent: '',
+          existingAgentBank: '',
+          debitConsent: '',
+          relationshipManager: '',
+          relationshipManagerBranch: '',
           idProof: null,
           addressProof: null,
           businessRegistration: null,
           signature: null,
         });
+
+        // This is where we reset the form and file names
         setFileNames({
           idProof: null,
           addressProof: null,
           businessRegistration: null,
           signature: null,
         });
-      } else {
+      } 
+
+      // This is where we handle errors during form submission
+      else {
         setSubmitMessage(result?.message || 'Failed to submit application.');
       }
-    } catch (err) {
+    } 
+    
+    // This is where we catch any unexpected errors
+    catch (err) {
       console.error(err);
       setSubmitMessage(err.message || 'An error occurred. Please try again.');
     } finally {
@@ -211,15 +279,21 @@ export default function AgentForm() {
   };
 
   return (
+
     <main className='bg-gray-100'>
-      <div className="max-w-4xl mx-auto pt-15 p-6 bg-white shadow-lg rounded-lg">
+      {/** This is where we render the Entire Background content */}
+      <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
+        
+        {/** This is the header */}
         <div className="flex text-center mb-8">
+         <Link href="/">
           <img 
             src="/payLogo.png" 
             alt="Olive Payment Solutions Logo" 
             className="mb-6 w-24 items-start justify-self-start" 
           />
-          <h1 className="text-2xl text-gray-700 font-bold ml-25 text-green">
+        </Link>
+          <h1 className="text-2xl text-gray-700 font-bold ml-9 text-green">
             OLIVE PAYMENT SOLUTIONS LIMITED
             <p className="text-xl text-gray-700 font-semibold">
               POINT OF SALE (POS) AGENT APPLICATION FORM
@@ -227,20 +301,26 @@ export default function AgentForm() {
           </h1>
         </div>
 
+       {/** This is where we render the form submission message */}
         {submitMessage && (
           <div className={`mb-4 p-4 rounded-md ${submitMessage.includes('success') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
             {submitMessage}
           </div>
         )}
 
+        {/** This is where we render the form */}
+
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* SECTION 1: PERSONAL INFORMATION */}
+
+          {/** SECTION 1: PERSONAL INFORMATION */}
           <section className="border-b pb-6">
             <h3 className="text-lg font-bold text-gray-700 mb-4">
               SECTION 1: PERSONAL INFORMATION
             </h3>
-            
+            {/** This is where we render the personal information inputs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/** This is where we render the full name input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Full Name *
@@ -255,7 +335,9 @@ export default function AgentForm() {
                   required
                 />
               </div>
-              
+             
+
+              {/** This is where we render the date of birth input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Date of Birth *
@@ -269,8 +351,10 @@ export default function AgentForm() {
                   required
                 />
               </div>
-              
-              <div>
+           
+
+            {/** This is where we render the gender input */ }
+                <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Gender *
                 </label>
@@ -285,6 +369,7 @@ export default function AgentForm() {
                       className="text-gray-700"
                       required
                     />
+                    {/** This is where we render the male gender option */}
                     <span className="ml-2 text-gray-700">Male</span>
                   </label>
                   <label className="inline-flex items-center">
@@ -296,11 +381,14 @@ export default function AgentForm() {
                       onChange={handleChange}
                       className="text-gray-700"
                     />
+
+                    {/** This is where we render the female gender option */}
                     <span className="ml-2 text-gray-700">Female</span>
                   </label>
                 </div>
               </div>
-              
+
+              {/** This is where we render the state of origin input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   State of Origin *
@@ -316,6 +404,8 @@ export default function AgentForm() {
                 />
               </div>
 
+
+              {/** This is where we render the LGA input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   L.G.A *
@@ -330,52 +420,58 @@ export default function AgentForm() {
                   required
                 />
               </div>
-              
+              {/** This is where we render the means of identification input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Means of Identification (NIN) *
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   name="idNumber"
                   value={formData.idNumber}
+                  maxLength={11}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                   placeholder="Enter your NIN number"
                   required
                 />
               </div>
-              
+              {/** This is where we render the BVN input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   BVN *
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   name="bvn"
                   value={formData.bvn}
+                  maxLength={11}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                   placeholder="Enter your Bank Verification Number"
                   required
                 />
               </div>
-              
+
+              {/** This is where we render the phone number input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Phone Number *
                 </label>
                 <input
-                  type="tel"
+                  type="number"
                   name="phone"
                   value={formData.phone}
+                  maxLength={11}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                   placeholder="Enter your phone number"
                   required
                 />
               </div>
-              
+
+
+              {/** This is where we render the email input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email Address *
@@ -390,7 +486,10 @@ export default function AgentForm() {
                   required
                 />
               </div>
-              
+
+
+
+              {/** This is where we render the residential address input */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Residential Address *
@@ -410,14 +509,21 @@ export default function AgentForm() {
 
           {/* SECTION 2: BUSINESS INFORMATION */}
           <section className="border-b pb-6">
+            {/** This is where we render the business information section */}
             <h3 className="text-lg font-bold text-gray-700 mb-4">
               SECTION 2: BUSINESS INFORMATION
             </h3>
-            
+
+
+            {/** This is where we render the business information inputs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+
+
+              {/** This is where we render the business name input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Name (if applicable)
+                  Business Name *
                 </label>
                 <input
                   type="text"
@@ -429,6 +535,8 @@ export default function AgentForm() {
                 />
               </div>
               
+
+              {/** This is where we render the business address input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Business Address
@@ -443,6 +551,8 @@ export default function AgentForm() {
                 />
               </div>
               
+
+              {/** This is where we render the business type input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Type of Business
@@ -457,9 +567,11 @@ export default function AgentForm() {
                 />
               </div>
               
+
+              {/** This is where we render the CAC registration number input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  CAC Reg No (if registered)
+                  CAC Reg No *
                 </label>
                 <input
                   type="text"
@@ -470,7 +582,10 @@ export default function AgentForm() {
                   placeholder="Enter CAC registration number"
                 />
               </div>
-              
+
+
+
+        {/** This is where we render the means of identification input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   If No CAC Registration (Payment Options)
@@ -485,6 +600,9 @@ export default function AgentForm() {
                       onChange={handleChange}
                       className="text-green-600"
                     />
+
+
+                    {/** This is where we render the type of identification payment input */}
                     <span className="ml-2 text-gray-700">Outright Payment</span>
                   </label>
                   <label className="inline-flex items-center">
@@ -496,11 +614,13 @@ export default function AgentForm() {
                       onChange={handleChange}
                       className="text-green-600"
                     />
+                    {/** This is where we render the type of identification payment input */}
                     <span className="ml-2 text-gray-700">Installments</span>
                   </label>
                 </div>
               </div>
-              
+
+              {/** This is where we render the years in business input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Years in Business
@@ -515,7 +635,8 @@ export default function AgentForm() {
                   min="0"
                 />
               </div>
-              
+
+              {/** This is where we render the existing agent input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Are you currently a POS agent for another bank or provider? *
@@ -531,6 +652,8 @@ export default function AgentForm() {
                       className="text-green-600"
                       required
                     />
+
+                    {/** This is where we render the existing agent input */}
                     <span className="ml-2 text-gray-700">YES</span>
                   </label>
                   <label className="inline-flex items-center">
@@ -547,6 +670,8 @@ export default function AgentForm() {
                 </div>
               </div>
 
+
+              {/** This is where we render the existing agent input */}
               {formData.existingAgent === 'YES' && (
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -566,13 +691,35 @@ export default function AgentForm() {
             </div>
           </section>
 
-          {/* SECTION 3: FINANCIAL INFORMATION */}
+
+          {/* SECTION 3: POS REQUIREMENT SECTION */}
           <section className="border-b pb-6">
             <h3 className="text-lg font-bold text-gray-700 mb-4">
-              SECTION 3: FINANCIAL INFORMATION
+              SECTION 3: POS REQUIREMENT
             </h3>
-            
+
+      {/** This is where we render the state of origin input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                 Account Number *
+                </label>
+                <input
+                  type="number"
+                  name="accountNumber"
+                  value={formData.accountNumber}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter your account number"
+                  required
+                />
+              </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Please provide your financial information to help us assess your application.
+            </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+
+              {/** This is where we render the financial information inputs */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Monthly Turnover (estimated) *
@@ -582,16 +729,18 @@ export default function AgentForm() {
                     ₦
                   </span>
                   <input
-                    type="number"
+                    type="text"
                     name="monthlyTurnover"
                     value={formData.monthlyTurnover}
                     onChange={handleChange}
                     className="w-full pl-8 pr-3 py-2 border text-black border-gray-300 rounded-md"
-                    placeholder="Enter amount in NGN"
+                    placeholder="Enter amount"
                     required
                   />
                 </div>
               </div>
+
+              {/** This is where we render the daily cash transaction limit input */}
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -602,18 +751,106 @@ export default function AgentForm() {
                     ₦
                   </span>
                   <input
-                    type="number"
+                    type="text"
                     name="dailyCashLimit"
                     value={formData.dailyCashLimit}
                     onChange={handleChange}
                     className="w-full pl-8 pr-3 py-2 border text-black border-gray-300 rounded-md"
-                    placeholder="Enter amount in NGN"
+                    placeholder="Enter amount"
                     required
                   />
                 </div>
               </div>
             </div>
-          </section>
+
+      {/* POS Terminals Needed */}
+          
+          
+            <div>
+              <label className="block text-sm font-medium pt-5 text-gray-700 mb-1">
+                Number of POS Terminals Needed *
+              </label>
+              <input
+                type="number"
+                name="posTerminalsNeeded"
+                value={formData.posTerminalsNeeded}
+                onChange={handleChange}
+                className="w-full pl-4 px-3 py-2 border text-black border-gray-300 rounded-md"
+                placeholder="Enter number of terminals"
+                min="1"
+                required
+              />
+            </div>
+         
+
+        {/** Customer Debit Consent */}
+         <div className="mb-4 pt-5">
+           <label className="block text-sm font-medium text-gray-700 mb-2">
+            Do you authorize us to debit your account with the sum of <strong> ₦21,500</strong> for the POS purchase?
+          </label>
+          <div className="flex items-center space-x-4">
+            <label className="flex text-gray-700 items-center">
+              <input
+                type="radio"
+                name="debitConsent"
+                value="yes"
+                checked={formData.debitConsent === "yes"}
+                onChange={handleChange}
+                className="mr-2"
+                required
+              />
+              Yes
+            </label>
+            <label className="flex text-gray-700 items-center">
+              <input
+                type="radio"
+                name="debitConsent"
+                value="no"
+                checked={formData.debitConsent === "no"}
+                onChange={handleChange}
+                className="mr-2"
+                required
+              />
+              No
+            </label>
+          </div>
+        </div>
+
+           {/* Preferred POS Features */}
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium pt-5 text-gray-700 mb-1">
+                <strong>PREFERRED POS FEATURES (SELECT ALL THAT APPLY) *</strong>
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                {['Contactless Payment', 'Mobile payment (NFC, QR code)', 'Card Payments', 'Transfer Services', 'Bill Payments', 'Airtime Purchase', 'Cash Withdrawal', 'Balance Inquiry', 'Receipt printing', 'Inventory Management'].map((feature) => (
+                  <label key={feature} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="posFeatures"
+                      value={feature}
+                      checked={formData.posFeatures.includes(feature)}
+                      onChange={handleChange}
+                      className="text-green-600 rounded"
+                    />
+                    <span className="ml-2 text-gray-700">{feature}</span>
+                  </label>
+                ))}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="posFeatures"
+                    value="Other"
+                    checked={formData.posFeatures.includes('Other')}
+                    onChange={handleChange}
+                    className="text-green-600 rounded"
+                  />
+                  <span className="ml-2 text-gray-700">Others (please specify)</span>
+                </div>
+              </div>
+            </div>
+      </section>
+         
 
           {/* SECTION 4: LOCATION AND INFRASTRUCTURE */}
           <section className="border-b pb-6">
@@ -622,6 +859,8 @@ export default function AgentForm() {
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/** This is where we render the location and infrastructure inputs */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Location/Area of POS Terminal Usage *
@@ -642,7 +881,8 @@ export default function AgentForm() {
                   ))}
                 </div>
               </div>
-              
+
+              {/** This is where we render the electricity supply input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Electricity Supply *
@@ -664,7 +904,8 @@ export default function AgentForm() {
                   ))}
                 </div>
               </div>
-              
+
+              {/** This is where we render the backup power source input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Backup Power Source (if any)
@@ -683,10 +924,10 @@ export default function AgentForm() {
 
           {/* SECTION 5: DECLARATION AND SIGNATURE */}
           <section className="border-b pb-6">
-            <h3 className="text-lg ml-9 font-bold text-gray-700 mb-4">
-              SECTION 5: DECLARATION AND SIGNATURE
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
+            SECTION 5: DECLARATION AND SIGNATURE
             </h3>
-            
+            {/** This is where we render the name declaration inputs */}
             <div className="space-y-4">
               <p className="text-gray-700">
                 I, <input
@@ -704,6 +945,8 @@ export default function AgentForm() {
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+
+                {/** This is where we render the signature input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Signature *
@@ -736,6 +979,8 @@ export default function AgentForm() {
                   </div>
                 </div>
                 
+
+                {/** This is where we render the date input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Date *
@@ -826,7 +1071,7 @@ export default function AgentForm() {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business registration (if applicable)
+                  Business registration *
                 </label>
                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
                   <div className="space-y-1 text-center">
@@ -978,28 +1223,80 @@ export default function AgentForm() {
             </label>
           </div>
 
+
+
+          {/* Introducer Branch */}
+         <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Relationship Manager Branch (if any) *
+              </label>
+              <select
+                name="relationshipManagerBranch"
+                value={formData.relationshipManagerBranch}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                required
+              >
+                <option value="">None</option>
+                <option value="Retail">Head Office</option>
+                <option value="Services">Abuja</option>
+                <option value="Hospitality">Victoria Island</option>
+                <option value="E-commerce">Enugu</option>
+                <option value="E-commerce">Aba</option>
+                <option value="E-commerce">Umuahia</option>
+               
+
+              </select>
+            </div>
+
           {/* Introducer Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Introducer Name *
-            </label>
-            <input
-              type="text"
-              name="introducerName"
-              value={formData.introducerName}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-              placeholder="Enter your Introducer name"
-              required
-            />
-          </div>
+         <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Relationship Manager (if any) *
+              </label>
+              <select
+                name="relationshipManager"
+                value={formData.relationshipManager}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                required
+              >
+                <option value="">None</option>
+                <option value="Retail">ADEBISI OGUNSOLA</option>
+                <option value="Services">Abdulhafiz Usman</option>
+                <option value="Hospitality">Anthony Ajana</option>
+                <option value="E-commerce">Anthony peace chidubem</option>
+                <option value="E-commerce">Ayodele Owolabim</option>
+                <option value="E-commerce">Chinedu Nnonah</option>
+                <option value="E-commerce">Dominic Isisoma Okiah</option>
+                <option value="E-commerce">Emmanuel Oluwaseun Chukwuma</option>
+                <option value="E-commerce">Folajimi Odulana</option>
+                <option value="E-commerce">George Oghale Eriwona</option>
+                <option value="E-commerce">Glory chibroma Chinda</option>
+                <option value="E-commerce">Haliru Muhammad Lawal</option>
+                <option value="E-commerce">Ibrahim Musa</option>
+                <option value="E-commerce">Ifeanyi Kinsley Ogah</option>
+                <option value="E-commerce">Ikenna Azoribe</option>
+                <option value="E-commerce">Ikwuagwu Oluchi</option>
+                <option value="E-commerce">Iria Adeyemi</option>
+                <option value="E-commerce">Maclean Wokoh</option>
+                <option value="E-commerce">Nkeiruka Onyezewe</option>
+                <option value="E-commerce">Ogechi Ukaegbu</option>
+                <option value="Other">Onyeka David Chima</option>
+                <option value="Other">SAMUEL AJOSE</option>
+                <option value="Other">Uche Ugochi</option>
+                <option value="Other">Victory Emenike</option>
+                <option value="Other">Other</option>
+
+              </select>
+            </div>
 
           {/* Submit Button */}
           <div className="mt-8 text-center">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-3 bg-[#0B3D3B] text-[#94BB0D] font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-[#0B3D3B] text-[#d7d8d4] font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'SUBMITTING...' : 'SUBMIT APPLICATION'}
             </button>
