@@ -91,7 +91,6 @@ export async function POST(request) {
         "oobinna@olivepayment.com",
         "eani@olivepayment.com",
         "vike@olivepayment.com",
-        "eutuama@olivepayment.com",
       ],
       from: "olivemfb.ng@gmail.com",
       subject: "New POS Agent Application",
