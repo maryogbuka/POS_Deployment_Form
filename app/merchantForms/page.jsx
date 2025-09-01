@@ -30,7 +30,9 @@ export default function MerchantForm() {
     // BANK ACCOUNT INFORMATION
     bankName: '',
     accountName: '',
+    accountNumber: '', // Added missing property
     accountType: '',
+    debitConsent: '', // Added missing property
     
     // POS REQUIREMENT
     posTerminalsNeeded: '',
@@ -71,7 +73,6 @@ export default function MerchantForm() {
     const { name, value, type } = e.target;
 
     if (type === 'checkbox') {
-      
       if (name === 'posFeatures' || name === 'operatingPeriod') {
         const exists = formData[name].includes(value);
         setFormData((prev) => ({
@@ -85,7 +86,6 @@ export default function MerchantForm() {
     }
 
     // This Restricts NIN, BVN, Phone to digits only (max 11)
-
     if (["businessPhone", "ownerPhone", "tradeReferencePhone", "bankReferencePhone", "ownerIdNo"].includes(name)) {
       if (!/^\d*$/.test(value)) return; // only digits
       if (value.length > 11) return;   // max 11
@@ -93,15 +93,14 @@ export default function MerchantForm() {
       return;
     }
 
-   // This formats money fields with commas but keeps raw number
-if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
-  const raw = value.replace(/,/g, "");
-  if (!/^\d*$/.test(raw)) return; // only digits
-  const formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  setFormData((prev) => ({ ...prev, [name]: formatted }));
-  return;
-}
-
+    // This formats money fields with commas but keeps raw number
+    if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
+      const raw = value.replace(/,/g, "");
+      if (!/^\d*$/.test(raw)) return; // only digits
+      const formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      setFormData((prev) => ({ ...prev, [name]: formatted }));
+      return;
+    }
 
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -119,7 +118,6 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-       
         // remove "data:<mime>;base64,"
         const result = String(reader.result);
         const base64 = result.includes(',')
@@ -144,7 +142,6 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
       content,
       disposition: 'attachment',
     };
-    // NOTE: Maryann this shape is what the backend forwards to SendGrid.
   };
 
   const handleSubmit = async (e) => {
@@ -154,17 +151,17 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
       setSubmitMessage('You must accept the Terms and Conditions to submit the application');
       return;
     }
+    
     let website = formData.businessWebsite.trim();
     if (website && !/^https?:\/\//i.test(website)) {
-    website = "https://" + website;
-}
+      website = "https://" + website;
+    }
 
     setIsSubmitting(true);
     setSubmitMessage('');
 
     try {
-      //To Generate PDF first
-
+      // Generate PDF first
       let pdfBase64 = null;
       try {
         pdfBase64 = await generateMerchantPDF(formData, fileNames);
@@ -173,8 +170,7 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
         throw new Error("Failed to generate application PDF");
       }
 
-      // This is to Build attachments array from the file inputs
-
+      // Build attachments array from the file inputs
       const attachments = (await Promise.all([
         fileToAttachment(formData.cacDocument, 'cacDocument'),
         fileToAttachment(formData.idDocument, 'idDocument'),
@@ -182,7 +178,6 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
       ])).filter(Boolean); 
 
       // Add PDF to attachments
-
       attachments.push({
         filename: `MerchantApplication_${formData.businessName || 'Unknown'}_${new Date().getTime()}.pdf`,
         type: 'application/pdf',
@@ -191,7 +186,6 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
       });
 
       // Build JSON payload with minimal data since PDF contains all details
-
       const payload = {
         businessName: formData.businessName,
         businessEmail: formData.businessEmail,
@@ -237,14 +231,17 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
           accountName: '',
           accountNumber: '',
           accountType: '',
+          debitConsent: '',
+          relationshipManager: '',
+          relationshipManagerBranch: '',
+          existingAgent: '',
+          existingAgentBank: '',
           posTerminalsNeeded: '',
           monthlyTransactionVolume: '',
           averageTransactionSize: '',
           posFeatures: [],
           primaryUsageLocation: '',
           locationAddress: '',
-          relationshipManager: '',
-          relationshipManagerBranch: '',
           hasMultipleStores: '',
           additionalLocations: '',
           operatingPeriod: [],
@@ -275,354 +272,327 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
 
   return (
     <main className='bg-gray-100'>
-    <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
-      <div className="flex text-center mb-8">
-        <Link href="/">
-          <img 
-            src="/payLogo.png" 
-            alt="Olive Payment Solutions Logo" 
-            className="mb-6 w-24 items-start justify-self-start" 
-          />
-        </Link>
-        <h1 className="text-2xl text-gray-700 font-bold ml-9 text-green">
-          OLIVE PAYMENT SOLUTIONS LIMITED
-          <p className="text-xl text-gray-700 font-semibold">
-            MERCHANT POS APPLICATION FORM
-          </p>
-        </h1>
-      </div>
-
-      {submitMessage && (
-        <div className={`mb-4 p-4 rounded-md ${submitMessage.includes('success') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-          {submitMessage}
+      <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
+        <div className="flex text-center mb-8">
+          <Link href="/">
+            <img 
+              src="/payLogo.png" 
+              alt="Olive Payment Solutions Logo" 
+              className="mb-6 w-24 items-start justify-self-start" 
+            />
+          </Link>
+          <h1 className="text-2xl text-gray-700 font-bold md:ml-22 sm:ml-9 lg:ml-28 text-green">
+            OLIVE PAYMENT SOLUTIONS LIMITED
+            <p className="text-xl text-gray-700 pt-5 font-semibold">
+              MERCHANT (POS) APPLICATION FORM
+            </p>
+          </h1>
         </div>
-      )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        
-        {/* BUSINESS INFORMATION SECTION */}
-
-        <section className="border-b pb-6">
-          <h3 className="text-lg font-bold text-gray-700 mb-4">
-            BUSINESS INFORMATION
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Business Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Name *
-              </label>
-              <input
-                type="text"
-                name="businessName"
-                value={formData.businessName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter business name"
-                required
-              />
-            </div>
-            
-            {/* Trading Name */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Trading Name *
-              </label>
-              <input
-                type="text"
-                name="tradingName"
-                value={formData.tradingName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter trading name"
-                required
-              />
-            </div>
-            
-            {/* Business Address */}
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Address *
-              </label>
-              <textarea
-                name="businessAddress"
-                value={formData.businessAddress}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter business address"
-                rows="3"
-                required
-              ></textarea>
-            </div>
-            
-            {/* City/Town */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                City/Town *
-              </label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter city/town"
-                required
-              />
-            </div>
-            
-            {/* State */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                State *
-              </label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter state"
-                required
-              />
-            </div>
-            
-            {/* L.G.A */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                L.G.A *
-              </label>
-              <input
-                type="text"
-                name="lga"
-                value={formData.lga}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter Local Government Area"
-                required
-              />
-            </div>
-            
-            {/* Business Phone */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Phone Number *
-              </label>
-              <input
-                type="number"
-                name="businessPhone"
-                value={formData.businessPhone}
-                onChange={handleChange}
-                maxLength={11}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter business phone number"
-                required
-              />
-            </div>
-            
-            {/* Business Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Email Address *
-              </label>
-              <input
-                type="email"
-                name="businessEmail"
-                value={formData.businessEmail}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter business email"
-                required
-              />
-            </div>
-            
-            {/* Business Website */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Website
-              </label>
-              <input
-                type="text"
-                name="businessWebsite"
-                value={formData.businessWebsite}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter website URL"
-              />
-            </div>
-            
-            {/* Business Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business Type *
-              </label>
-              <select
-                name="businessType"
-                value={formData.businessType}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                required
-              >
-                <option value="">Select business type</option>
-                <option value="Retail">Retail</option>
-                <option value="Services">Services</option>
-                <option value="Hospitality">Hospitality</option>
-                <option value="E-commerce">E-commerce</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            
-            {/* CAC Registration Number */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                CAC Registration Number
-              </label>
-              <input
-                type="text"
-                name="cacRegNo"
-                value={formData.cacRegNo}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter CAC registration number"
-              />
-            </div>
-            
-            {/* TIN */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                TIN (Tax Identification Number)
-              </label>
-              <input
-                type="text"
-                name="tin"
-                value={formData.tin}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter TIN"
-              />
-            </div>
-            
-            {/* Nature of Business */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nature of Business *
-              </label>
-              <textarea
-                name="natureOfBusiness"
-                value={formData.natureOfBusiness}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Describe the nature of your business"
-                rows="3"
-                required
-              ></textarea>
-            </div>
+        {submitMessage && (
+          <div className={`mb-4 p-4 rounded-md ${submitMessage.includes('success') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {submitMessage}
           </div>
-        </section>
+        )}
 
-        {/* BUSINESS OWNER/REPRESENTATIVE DETAILS SECTION */}
-        <section className="border-b pb-6">
-          <h3 className="text-lg font-bold text-gray-700 mb-4">
-            BUSINESS OWNER/REPRESENTATIVE DETAILS
-          </h3>
+        <form onSubmit={handleSubmit} className="space-y-8">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            {/* Owner Name */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                name="ownerName"
-                value={formData.ownerName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter full name"
-                required
-              />
-            </div>
+          {/* BUSINESS INFORMATION SECTION */}
+          <section className="border-b pb-6">
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
+              BUSINESS INFORMATION
+            </h3>
             
-            {/* Owner Title */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Title/Position *
-              </label>
-              <input
-                type="text"
-                name="ownerTitle"
-                value={formData.ownerTitle}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter title/position"
-                required
-              />
-            </div>
-           
-            {/* Owner Phone */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number *
-              </label>
-              <input
-                type="number"
-                name="ownerPhone"
-                value={formData.ownerPhone}
-                onChange={handleChange}
-                maxLength={11}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter phone number"
-                required
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Business Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Name *
+                </label>
+                <input
+                  type="text"
+                  name="businessName"
+                  value={formData.businessName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter business name"
+                  required
+                />
+              </div>
             
-            {/* Owner ID Number */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ID Number *
-              </label>
-              <input
-                type="number"
-                name="ownerIdNo"
-                value={formData.ownerIdNo}
-                onChange={handleChange}
-                maxLength={11}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter ID number"
-                required
-              />
+              
+              {/* Business Address */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Address *
+                </label>
+                <textarea
+                  name="businessAddress"
+                  value={formData.businessAddress}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter business address"
+                  rows="3"
+                  required
+                ></textarea>
+              </div>
+              
+              {/* City/Town */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  City/Town *
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter city/town"
+                  required
+                />
+              </div>
+              
+              {/* State */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  State *
+                </label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter state"
+                  required
+                />
+              </div>
+              
+              {/* L.G.A */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  L.G.A *
+                </label>
+                <input
+                  type="text"
+                  name="lga"
+                  value={formData.lga}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter Local Government Area"
+                  required
+                />
+              </div>
+              
+              {/* Business Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Phone Number *
+                </label>
+                <input
+                  type="number"
+                  name="businessPhone"
+                  value={formData.businessPhone}
+                  onChange={handleChange}
+                  maxLength={11}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter business phone number"
+                  required
+                />
+              </div>
+              
+              {/* Business Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Email Address *
+                </label>
+                <input
+                  type="email"
+                  name="businessEmail"
+                  value={formData.businessEmail}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter business email"
+                  required
+                />
+              </div>
+              
+              {/* Business Website */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Website
+                </label>
+                <input
+                  type="text"
+                  name="businessWebsite"
+                  value={formData.businessWebsite}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter website URL"
+                />
+              </div>
+              
+              {/* Business Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Type *
+                </label>
+                <select
+                  name="businessType"
+                  value={formData.businessType}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-md"
+                  required
+                >
+                  <option value="">Select business type</option>
+                  <option value="Retail">Retail</option>
+                  <option value="Services">Services</option>
+                  <option value="Hospitality">Hospitality</option>
+                  <option value="E-commerce">E-commerce</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              
+              {/* CAC Registration Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  CAC Registration Number
+                </label>
+                <input
+                  type="text"
+                  name="cacRegNo"
+                  value={formData.cacRegNo}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter CAC registration number"
+                />
+              </div>
+              
+              {/* TIN */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  TIN (Tax Identification Number)
+                </label>
+                <input
+                  type="text"
+                  name="tin"
+                  value={formData.tin}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter TIN"
+                />
+              </div>
+              
+              {/* Nature of Business */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nature of Business *
+                </label>
+                <textarea
+                  name="natureOfBusiness"
+                  value={formData.natureOfBusiness}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Describe the nature of your business"
+                  rows="3"
+                  required
+                ></textarea>
+              </div>
             </div>
+          </section>
+
+          {/* BUSINESS OWNER/REPRESENTATIVE DETAILS SECTION */}
+          <section className="border-b pb-6">
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
+              BUSINESS OWNER/REPRESENTATIVE DETAILS
+            </h3>
             
-            {/* Owner Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address *
-              </label>
-              <input
-                type="email"
-                name="ownerEmail"
-                value={formData.ownerEmail}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter email address"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Owner Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  name="ownerName"
+                  value={formData.ownerName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter full name"
+                  required
+                />
+              </div>
+              
+              {/* Owner Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Title/Position *
+                </label>
+                <input
+                  type="text"
+                  name="ownerTitle"
+                  value={formData.ownerTitle}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter title/position"
+                  required
+                />
+              </div>
+             
+              {/* Owner Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number *
+                </label>
+                <input
+                  type="number"
+                  name="ownerPhone"
+                  value={formData.ownerPhone}
+                  onChange={handleChange}
+                  maxLength={11}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter phone number"
+                  required
+                />
+              </div>
+              
+              {/* Owner ID Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ID Number *
+                </label>
+                <input
+                  type="number"
+                  name="ownerIdNo"
+                  value={formData.ownerIdNo}
+                  onChange={handleChange}
+                  maxLength={11}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter ID number"
+                  required
+                />
+              </div>
+              
+              {/* Owner Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  name="ownerEmail"
+                  value={formData.ownerEmail}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter email address"
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Business Owner Signature */}
-
+            {/* Business Owner Signature */}
             <div>
               <label className="block text-sm font-medium pt-5 text-gray-700 mb-1">
                 Business Owner Signature *
@@ -654,187 +624,226 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
                 </div>
               </div>
             </div>
-        </section>
+          </section>
 
-        {/* BANK ACCOUNT INFORMATION SECTION */}
-
-        <section className="border-b pb-6">
-          <h3 className="text-lg font-bold text-gray-700 mb-4">
-            BANK ACCOUNT INFORMATION
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* BANK ACCOUNT INFORMATION SECTION */}
+          <section className="border-b pb-6">
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
+              BANK ACCOUNT INFORMATION
+            </h3>
             
-            {/* Account Name */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Account Name *
-              </label>
-              <input
-                type="text"
-                name="accountName"
-                value={formData.accountName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter account name"
-                required
-              />
-            </div>
-            
-
-            {/* Account Number */}
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Account Number *
-              </label>
-              <input
-                type="text"
-                name="accountNumber"
-                value={formData.accountNumber}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter account number"
-                required
-              />
-            </div>
-            
-
-
-            {/* Account Type */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Account Type *
-              </label>
-              <select
-                name="accountType"
-                value={formData.accountType}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                required
-              >
-                <option value="">Select account type</option>
-                <option value="Savings">Savings</option>
-                <option value="Current">Current</option>
-                <option value="Corporate">Corporate</option>
-              </select>
-            </div>
-          </div>
-        </section>
-
-        {/* POS REQUIREMENT SECTION */}
-
-        <section className="border-b pb-6">
-          <h3 className="text-lg font-bold text-gray-700 mb-4">
-            POS REQUIREMENT
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* POS Terminals Needed */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Number of POS Terminals Needed *
-              </label>
-              <input
-                type="number"
-                name="posTerminalsNeeded"
-                value={formData.posTerminalsNeeded}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter number of terminals"
-                min="1"
-                required
-              />
-            </div>
-            
-            {/* Monthly Transaction Volume */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Expected Monthly Transaction Volume *
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
-                  ₦
-                </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Account Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Account Name *
+                </label>
                 <input
                   type="text"
-                  name="monthlyTransactionVolume"
-                  value={formData.monthlyTransactionVolume}
+                  name="accountName"
+                  value={formData.accountName}
                   onChange={handleChange}
-                  className="w-full pl-8 pr-3 py-2 border text-black border-gray-300 rounded-md"
-                  placeholder="Enter amount"
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter account name"
                   required
                 />
               </div>
-            </div>
-            
-            {/* Average Transaction Size */}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Expected Average Transaction Size *
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
-                  ₦
-                </span>
+              
+              {/* Account Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Account Number *
+                </label>
                 <input
                   type="text"
-                  name="averageTransactionSize"
-                  value={formData.averageTransactionSize}
+                  name="accountNumber"
+                  value={formData.accountNumber}
                   onChange={handleChange}
-                  className="w-full pl-8 pr-3 py-2 border text-black border-gray-300 rounded-md"
-                  placeholder="Enter amount"
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter account number"
                   required
                 />
               </div>
+              
+              {/* Account Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Account Type *
+                </label>
+                <select
+                  name="accountType"
+                  value={formData.accountType}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-md"
+                  required
+                >
+                  <option value=" text-">Select account type</option>
+                  <option value="Savings">Savings</option>
+                  <option value="Current">Current</option>
+                  <option value="Corporate">Corporate</option>
+                </select>
+              </div>
             </div>
+          </section>
+
+          {/* POS REQUIREMENT SECTION */}
+          <section className="border-b pb-6">
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
+              POS REQUIREMENT
+            </h3>
             
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* POS Terminals Needed */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Number of POS Terminals Needed *
+                </label>
+                <input
+                  type="number"
+                  name="posTerminalsNeeded"
+                  value={formData.posTerminalsNeeded}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter number of terminals"
+                  min="1"
+                  required
+                />
+              </div>
+              
+              {/* Monthly Transaction Volume */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Expected Monthly Transaction Volume *
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                    ₦
+                  </span>
+                  <input
+                    type="text"
+                    name="monthlyTransactionVolume"
+                    value={formData.monthlyTransactionVolume}
+                    onChange={handleChange}
+                    className="w-full pl-8 pr-3 py-2 border text-black border-gray-300 rounded-md"
+                    placeholder="Enter amount"
+                    required
+                  />
+                </div>
+              </div>
+              
+              {/* Average Transaction Size */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Expected Average Transaction Size *
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                    ₦
+                  </span>
+                  <input
+                    type="text"
+                    name="averageTransactionSize"
+                    value={formData.averageTransactionSize}
+                    onChange={handleChange}
+                    className="w-full pl-8 pr-3 py-2 border text-black border-gray-300 rounded-md"
+                    placeholder="Enter amount"
+                    required
+                  />
+                </div>
+              </div>
+              
               {/* Preferred POS Features */}
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                PREFERRED POS FEATURES (SELECT ALL THAT APPLY)
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                {['Contactless Payment', 'Mobile payment (NFC, QR code)', 'Card Payments', 'Transfer Services', 'Bill Payments', 'Airtime Purchase', 'Cash Withdrawal', 'Balance Inquiry', 'Receipt printing', 'Inventory Management'].map((feature) => (
-                  <label key={feature} className="flex items-center">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  PREFERRED POS FEATURES (SELECT ALL THAT APPLY)
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+                  {['Contactless Payment', 'Mobile payment (NFC, QR code)', 'Card Payments', 'Transfer Services', 'Bill Payments', 'Airtime Purchase', 'Cash Withdrawal', 'Balance Inquiry', 'Receipt printing', 'Inventory Management'].map((feature) => (
+                    <label key={feature} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="posFeatures"
+                        value={feature}
+                        checked={formData.posFeatures.includes(feature)}
+                        onChange={handleChange}
+                        className="text-green-600 rounded"
+                      />
+                      <span className="ml-2 text-gray-700">{feature}</span>
+                    </label>
+                  ))}
+                  <div className="flex items-center">
                     <input
                       type="checkbox"
                       name="posFeatures"
-                      value={feature}
-                      checked={formData.posFeatures.includes(feature)}
+                      value="Other"
+                      checked={formData.posFeatures.includes('Other')}
                       onChange={handleChange}
                       className="text-green-600 rounded"
                     />
-                    <span className="ml-2 text-gray-700">{feature}</span>
+                    <span className="ml-2 text-gray-700">Others (please specify)</span>
+                  </div>
+                </div>
+
+              {/** This is where we render the existing agent input */}
+              <div>
+                <label className="block text-sm mt-5 font-medium text-gray-700 mb-1">
+                  Are you currently a POS agent for another bank or provider? *
+                </label>
+                <div className="flex space-x-4 mt-2">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="existingAgent"
+                      value="YES"
+                      checked={formData.existingAgent === 'YES'}
+                      onChange={handleChange}
+                      className="text-green-600"
+                      required
+                    />
+
+                    {/** This is where we render the existing agent input */}
+                    <span className="ml-2 text-gray-700">YES</span>
                   </label>
-                ))}
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="posFeatures"
-                    value="Other"
-                    checked={formData.posFeatures.includes('Other')}
-                    onChange={handleChange}
-                    className="text-green-600 rounded"
-                  />
-                  <span className="ml-2 text-gray-700">Others (please specify)</span>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="existingAgent"
+                      value="NO"
+                      checked={formData.existingAgent === 'NO'}
+                      onChange={handleChange}
+                      className="text-green-600"
+                    />
+                    <span className="ml-2 text-gray-700">NO</span>
+                  </label>
                 </div>
               </div>
+
+
+              {/** This is where we render the existing agent input */}
+              {formData.existingAgent === 'YES' && (
+                <div className="md:col-span-2 *:mt-4  ">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Which bank/provider are you currently working with? *
+                  </label>
+                  <input
+                    type="text"
+                    name="existingAgentBank"
+                    value={formData.existingAgentBank}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                    placeholder="Enter bank or provider name"
+                    required={formData.existingAgent === 'YES'}
+                  />
+                </div>
+              )}
             </div>
-          </div>
-
-
-           {/** Customer Debit Consent */}
+              </div>
+               {/** Customer Debit Consent */}
          <div className="mb-4 pt-5">
            <label className="block text-sm font-medium text-gray-700 mb-2">
-            Do you authorize us to debit your account with the sum of <strong> ₦21,500</strong> for the POS purchase?
+            Do you authorize us to debit your account with the sum of <strong> ₦21,500</strong> as <strong>POS caution fee</strong>?
           </label>
           <div className="flex items-center space-x-4">
             <label className="flex text-gray-700 items-center">
@@ -863,233 +872,204 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
             </label>
           </div>
         </div>
+          </section>
 
-        </section>
-
-        {/* LOCATION INFORMATION SECTION */}
-
-        <section className="border-b pb-6">
-          <h3 className="text-lg font-bold text-gray-700 mb-4">
-            LOCATION INFORMATION
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* LOCATION INFORMATION SECTION */}
+          <section className="border-b pb-6">
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
+              POS LOCATION INFORMATION
+            </h3>
             
-            {/* Primary Place of Usage */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Primary Place of Usage *
-              </label>
-              <input
-                type="text"
-                name="primaryUsageLocation"
-                value={formData.primaryUsageLocation}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter primary usage location"
-                required
-              />
-            </div>
-            
-            {/* Location Address */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location Address *
-              </label>
-              <input
-                type="text"
-                name="locationAddress"
-                value={formData.locationAddress}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter location address"
-                required
-              />
-            </div>
-            
-            {/* Has Multiple Stores */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Do you have multiple stores/locations? *
-              </label>
-              <div className="flex space-x-4 mt-2">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="hasMultipleStores"
-                    value="YES"
-                    checked={formData.hasMultipleStores === 'YES'}
-                    onChange={handleChange}
-                    className="text-green-600"
-                    required
-                  />
-                  <span className="ml-2 text-gray-700">YES</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="hasMultipleStores"
-                    value="NO"
-                    checked={formData.hasMultipleStores === 'NO'}
-                    onChange={handleChange}
-                    className="text-green-600"
-                  />
-                  <span className="ml-2 text-gray-700">NO</span>
-                </label>
-              </div>
-            </div>
-            
-            {/* Additional Locations */}
-            {formData.hasMultipleStores === 'YES' && (
-              <div className="md:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Primary Place of Usage */}
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Additional Locations
+                  Primary Place of Usage *
                 </label>
-                <textarea
-                  name="additionalLocations"
-                  value={formData.additionalLocations}
+                <input
+                  type="text"
+                  name="primaryUsageLocation"
+                  value={formData.primaryUsageLocation}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                  placeholder="List additional locations with addresses"
-                  rows="3"
-                ></textarea>
+                  placeholder="Enter primary usage location"
+                  required
+                />
               </div>
-            )}
-            
-            {/* Operating Period */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Operating Period (Select all that apply) *
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
-                {['Weekdays', 'Weekends', '24/7'].map((period) => (
-                  <label key={period} className="flex items-center">
+              
+              {/* Location Address */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Location Address *
+                </label>
+                <input
+                  type="text"
+                  name="locationAddress"
+                  value={formData.locationAddress}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter location address"
+                  required
+                />
+              </div>
+              
+              {/* Has Multiple Stores */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Do you have multiple stores/locations? *
+                </label>
+                <div className="flex space-x-4 mt-2">
+                  <label className="inline-flex items-center">
                     <input
-                      type="checkbox"
-                      name="operatingPeriod"
-                      value={period}
-                      checked={formData.operatingPeriod.includes(period)}
+                      type="radio"
+                      name="hasMultipleStores"
+                      value="YES"
+                      checked={formData.hasMultipleStores === 'YES'}
                       onChange={handleChange}
-                      className="text-green-600 rounded"
-                      required={formData.operatingPeriod.length === 0}
+                      className="text-green-600"
+                      required
                     />
-                    <span className="ml-2 text-gray-700">{period}</span>
+                    <span className="ml-2 text-gray-700">YES</span>
                   </label>
-                ))}
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="hasMultipleStores"
+                      value="NO"
+                      checked={formData.hasMultipleStores === 'NO'}
+                      onChange={handleChange}
+                      className="text-green-600"
+                    />
+                    <span className="ml-2 text-gray-700">NO</span>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Additional Locations */}
+              {formData.hasMultipleStores === 'YES' && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Additional Locations
+                  </label>
+                  <textarea
+                    name="additionalLocations"
+                    value={formData.additionalLocations}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                    placeholder="List additional locations with addresses"
+                    rows="3"
+                  ></textarea>
+                </div>
+              )}
+              
+              {/* Operating Period */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Operating Period (Select all that apply) *
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
+                  {['Weekdays', 'Weekends', '24/7'].map((period) => (
+                    <label key={period} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="operatingPeriod"
+                        value={period}
+                        checked={formData.operatingPeriod.includes(period)}
+                        onChange={handleChange}
+                        className="text-green-600 rounded"
+                        required={formData.operatingPeriod.length === 0}
+                      />
+                      <span className="ml-2 text-gray-700">{period}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+             <p className="overflow-hidden whitespace-nowrap mt-8">
+            <span className="inline-block animate-marquee text-sm text-red-600">
+              *** Please note: Following our <strong>Geofencing Policy</strong>, the location provided must be the designated service area. ***
+            </span>
+        </p>
+          </section>
 
-        {/* REFERENCES SECTION */}
-        <section className="border-b pb-6">
-          <h3 className="text-lg font-bold text-gray-700 mb-4">
-            REFERENCES
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Bank Reference Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bank Reference Contact Name *
-              </label>
-              <input
-                type="text"
-                name="bankReferenceName"
-                value={formData.bankReferenceName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter bank reference name"
-                required
-              />
-            </div>
+          {/* REFERENCES SECTION */}
+          <section className="border-b pb-6">
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
+              REFERENCES
+            </h3>
             
-            {/* Bank Reference Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bank Reference Phone Number *
-              </label>
-              <input
-                type="number"
-                name="bankReferencePhone"
-                value={formData.bankReferencePhone}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter bank reference phone"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Bank Reference Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bank Reference Contact Name *
+                </label>
+                <input
+                  type="text"
+                  name="bankReferenceName"
+                  value={formData.bankReferenceName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter bank reference name"
+                  required
+                />
+              </div>
+              
+              {/* Bank Reference Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bank Reference Phone Number *
+                </label>
+                <input
+                  type="number"
+                  name="bankReferencePhone"
+                  value={formData.bankReferencePhone}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter bank reference phone"
+                  required
+                />
+              </div>
             </div>
-            
-            {/* Trade Reference Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Trade Reference Contact Name *
-              </label>
-              <input
-                type="text"
-                name="tradeReferenceName"
-                value={formData.tradeReferenceName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter trade reference name"
-                required
-              />
-            </div>
-            
-            {/* Trade Reference Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Trade Reference Phone Number *
-              </label>
-              <input
-                type="number"
-                name="tradeReferencePhone"
-                value={formData.tradeReferencePhone}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                placeholder="Enter trade reference phone"
-                required
-              />
-            </div>
-          </div>
-        </section>
+          </section>
 
-        {/* REQUIRED ATTACHMENTS SECTION */}
-        <section className="border-b pb-6">
-          <h3 className="text-lg font-bold text-gray-700 mb-4">
-            REQUIRED ATTACHMENTS
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* REQUIRED ATTACHMENTS SECTION */}
+          <section className="border-b pb-6">
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
+              REQUIRED ATTACHMENTS
+            </h3>
             
-            {/* CAC Document */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                CAC Registration Document *
-              </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
-                <div className="space-y-1 text-center">
-                  <div className="flex text-sm text-gray-600">
-                    <label className="relative cursor-pointer bg-white rounded-md font-bold text-[#0B3D3B] hover:text-green-500">
-                      <span>Upload file</span>
-                      <input
-                        type="file"
-                        name="cacDocument"
-                        onChange={handleFileChange}
-                        className="sr-only"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                      />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    PDF, JPG, PNG up to 5MB
-                  </p>
-                  {fileNames.cacDocument && (
-                    <p className="text-sm text-[#0B3D3B] mt-2">
-                      ✓ {fileNames.cacDocument}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* CAC Document */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  CAC Registration Document *
+                </label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
+                  <div className="space-y-1 text-center">
+                    <div className="flex text-sm text-gray-600">
+                      <label className="relative cursor-pointer bg-white rounded-md font-bold text-[#0B3D3B] hover:text-green-500">
+                        <span>Upload file</span>
+                        <input
+                          type="file"
+                          name="cacDocument"
+                          onChange={handleFileChange}
+                          className="sr-only"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PDF, JPG, PNG up to 5MB
                     </p>
-                  )}
+                    {fileNames.cacDocument && (
+                      <p className="text-sm text-[#0B3D3B] mt-2">
+                        ✓ {fileNames.cacDocument}
+                      </p>
+                    )}
                 </div>
               </div>
             </div>
@@ -1173,7 +1153,6 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
 
             <h4 className="font-bold text-gray-700 mt-2 mb-2">AGREEMENT AND ACKNOWLEDGMENT</h4>
             <p className="text-sm text-gray-600 mb-4">
-              
               By using OlivePay's POS system, you, the Merchant, agree to comply with these Terms and
               Conditions. Please read carefully, as these terms form a binding legal agreement between you
               and OlivePay.
@@ -1277,43 +1256,16 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
           </div>
         </section>
 
-
-
-        {/* Introducer Branch */}
+          {/* Introducer Name */}
          <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Relationship Manager Branch (if any) *
+                Relationship Manager (if any) *
               </label>
               <select
-                name="relationshipManagerBranch"
-                value={formData.relationshipManagerBranch}
+                name="relationshipManager"
+                value={formData.relationshipManager}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                required
-              >
-                <option value="">None</option>
-                <option value="Retail">Head Office</option>
-                <option value="Services">Abuja</option>
-                <option value="Hospitality">Victoria Island</option>
-                <option value="E-commerce">Enugu</option>
-                <option value="E-commerce">Aba</option>
-                <option value="E-commerce">Umuahia</option>
-               
-
-              </select>
-            </div>
-
-
-       {/* Introducer Name */}
-              <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-               Relationship Manager (if any) *
-              </label>
-              <select
-                name="introducerName"
-                value={formData.introducerName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-md"
                 required
               >
                 <option value="">None</option>
@@ -1342,15 +1294,49 @@ if (["monthlyTransactionVolume", "averageTransactionSize"].includes(name)) {
                 <option value="Other">Uche Ugochi</option>
                 <option value="Other">Victory Emenike</option>
                 <option value="Other">Other</option>
+
               </select>
             </div>
+
+            
+          {/* Introducer Branch */}
+         <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Relationship Manager Branch (if any) *
+              </label>
+              <select
+                name="relationshipManagerBranch"
+                value={formData.relationshipManagerBranch}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-md"
+                required
+              >
+                <option value="">None</option>
+                <option value="Retail">Head Office</option>
+                <option value="Services">Abuja</option>
+                <option value="Hospitality">Victoria Island</option>
+                <option value="E-commerce">Enugu</option>
+                <option value="E-commerce">Aba</option>
+                <option value="E-commerce">Umuahia</option>
+                <option value="E-commerce">Ilorin</option>
+                <option value="E-commerce">Kano</option>
+                <option value="E-commerce">Ibadan</option>
+                <option value="E-commerce">Osun</option>
+                <option value="E-commerce">Port Harcourt</option>
+                <option value="E-commerce">Calabar</option>
+
+              </select>
+            </div>
+
+
         {/* Submit Button */}
         <div className="mt-8 text-center">
           <button
             type="submit"
-            className="px-6 py-3 bg-[#0B3D3B] text-[#d7d8d4] font-medium rounded-md"
+            disabled={isSubmitting}
+            className="px-6 py-3 bg-[#0B3D3B] text-[#d7d8d4] font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'SUBMITTING...' : 'SUBMIT APPLICATION'}
+            {isSubmitting ? 'SUBMITTING...' : 'Submit Application'}
           </button>
         </div>
       </form>

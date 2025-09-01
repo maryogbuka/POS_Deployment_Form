@@ -30,6 +30,9 @@ export default function AgentForm() {
     existingAgentBank: '',
 
     // Financial Information
+    accountType: '',
+    accountName: '',
+    accountNumber: '',
     monthlyTurnover: '',
     dailyCashLimit: '',
 
@@ -37,15 +40,19 @@ export default function AgentForm() {
     posTerminalsNeeded: '', 
     posFeatures: [],
     operatingPeriod: [],
+    debitConsent: '',
 
     // Infrastructure
+    primaryUsageLocation: '',
+    primaryUsageLocationAddress: '',
     terminalLocation: [],
     electricitySupply: '',
     backupPower: '',
 
     // Declaration
     date: '',
-    introducerName: '',
+    relationshipManager: '',
+    relationshipManagerBranch: '',
 
     // Files
     idProof: null,
@@ -75,6 +82,24 @@ export default function AgentForm() {
           ? prev[name].filter((v) => v !== value)
           : [...prev[name], value],
       }));
+      return;
+    }
+    // This Restricts NIN, BVN, Phone to digits only (max 11)
+    if (["idNumber", "bvn", "phone"].includes(name)) {
+      if (!/^\d*$/.test(value)) return; // only digits
+      if (value.length > 11) return;   // max 11
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      return;
+    }
+
+    // This formats money fields with commas but keeps raw number
+    if (["monthlyTurnover", "dailyCashLimit"].includes(name)) {
+      const raw = value.replace(/,/g, "");
+
+      
+      if (!/^\d*$/.test(raw)) return;
+      const formatted = raw.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      setFormData((prev) => ({ ...prev, [name]: formatted }));
       return;
     }
 
@@ -236,9 +261,14 @@ export default function AgentForm() {
           monthlyTurnover: '',
           dailyCashLimit: '',
           terminalLocation: [],
+          primaryUsageLocation: '',
+          primaryUsageLocationAddress: '',
+          locationAddress: '',
           electricitySupply: '',
           backupPower: '',
           accountNumber: '',
+          accountType: '',
+          accountName: '',
           date: '',
           posTerminalsNeeded: '',
           posFeatures: [],
@@ -281,10 +311,7 @@ export default function AgentForm() {
   return (
 
     <main className='bg-gray-100'>
-      {/** This is where we render the Entire Background content */}
-      <div className="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg">
-        
-        {/** This is the header */}
+      <div className="max-w-4xl mx-auto  p-6 bg-white shadow-lg rounded-lg">
         <div className="flex text-center mb-8">
          <Link href="/">
           <img 
@@ -293,10 +320,10 @@ export default function AgentForm() {
             className="mb-6 w-24 items-start justify-self-start" 
           />
         </Link>
-          <h1 className="text-2xl text-gray-700 font-bold ml-9 text-green">
+          <h1 className="text-2xl text-gray-700 font-bold md:ml-22 sm:ml-9 lg:ml-28 text-green">
             OLIVE PAYMENT SOLUTIONS LIMITED
-            <p className="text-xl text-gray-700 font-semibold">
-              POINT OF SALE (POS) AGENT APPLICATION FORM
+            <p className="text-xl text-gray-700 mt-5 font-semibold">
+            AGENT (POS) APPLICATION FORM 
             </p>
           </h1>
         </div>
@@ -315,7 +342,7 @@ export default function AgentForm() {
           {/** SECTION 1: PERSONAL INFORMATION */}
           <section className="border-b pb-6">
             <h3 className="text-lg font-bold text-gray-700 mb-4">
-              SECTION 1: PERSONAL INFORMATION
+            PERSONAL INFORMATION
             </h3>
             {/** This is where we render the personal information inputs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -347,7 +374,7 @@ export default function AgentForm() {
                   name="dob"
                   value={formData.dob}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-md"
                   required
                 />
               </div>
@@ -511,7 +538,7 @@ export default function AgentForm() {
           <section className="border-b pb-6">
             {/** This is where we render the business information section */}
             <h3 className="text-lg font-bold text-gray-700 mb-4">
-              SECTION 2: BUSINESS INFORMATION
+     BUSINESS INFORMATION
             </h3>
 
 
@@ -695,7 +722,7 @@ export default function AgentForm() {
           {/* SECTION 3: POS REQUIREMENT SECTION */}
           <section className="border-b pb-6">
             <h3 className="text-lg font-bold text-gray-700 mb-4">
-              SECTION 3: POS REQUIREMENT
+          POS REQUIREMENT
             </h3>
 
       {/** This is where we render the state of origin input */}
@@ -718,6 +745,42 @@ export default function AgentForm() {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
+
+
+           {/* Account Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Account Name *
+                </label>
+                <input
+                  type="text"
+                  name="accountName"
+                  value={formData.accountName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter account name"
+                  required
+                />
+              </div>
+              
+              {/* Account Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Account Type *
+                </label>
+                <select
+                  name="accountType"
+                  value={formData.accountType}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-md"
+                  required
+                >
+                  <option value=" text-">Select account type</option>
+                  <option value="Savings">Savings</option>
+                  <option value="Current">Current</option>
+                  <option value="Corporate">Corporate</option>
+                </select>
+              </div>
 
               {/** This is where we render the financial information inputs */}
               <div>
@@ -786,7 +849,7 @@ export default function AgentForm() {
         {/** Customer Debit Consent */}
          <div className="mb-4 pt-5">
            <label className="block text-sm font-medium text-gray-700 mb-2">
-            Do you authorize us to debit your account with the sum of <strong> ₦21,500</strong> for the POS purchase?
+            Do you authorize us to debit your account with the sum of <strong> ₦21,500</strong> as <strong>POS caution fee</strong>?
           </label>
           <div className="flex items-center space-x-4">
             <label className="flex text-gray-700 items-center">
@@ -852,14 +915,46 @@ export default function AgentForm() {
       </section>
          
 
-          {/* SECTION 4: LOCATION AND INFRASTRUCTURE */}
+          {/* SECTION 4: LOCATION INFORMATION  */}
           <section className="border-b pb-6">
             <h3 className="text-lg font-bold text-gray-700 mb-4">
-              SECTION 4: LOCATION AND INFRASTRUCTURE
+           POS LOCATION INFORMATION
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
+          {/* Primary Place of Usage */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Primary Place of Usage *
+                </label>
+                <input
+                  type="text"
+                  name="primaryUsageLocation"
+                  value={formData.primaryUsageLocation}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter primary usage location"
+                  required
+                />
+              </div>
+
+             {/* Location Address */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Location Address *
+                </label>
+                <input
+                  type="text"
+                  name="locationAddress"
+                  value={formData.locationAddress}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter location address"
+                  required
+                />
+              </div>
+              
               {/** This is where we render the location and infrastructure inputs */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -920,12 +1015,18 @@ export default function AgentForm() {
                 />
               </div>
             </div>
+        <p className="overflow-hidden whitespace-nowrap mt-2">
+            <span className="inline-block animate-marquee text-sm text-red-600">
+              *** Please note: Following our <strong>Geofencing Policy</strong>, the location provided must be the designated service area. ***
+            </span>
+        </p>
+
           </section>
 
           {/* SECTION 5: DECLARATION AND SIGNATURE */}
           <section className="border-b pb-6">
             <h3 className="text-lg font-bold text-gray-700 mb-4">
-            SECTION 5: DECLARATION AND SIGNATURE
+           DECLARATION AND SIGNATURE
             </h3>
             {/** This is where we render the name declaration inputs */}
             <div className="space-y-4">
@@ -990,7 +1091,7 @@ export default function AgentForm() {
                     name="date"
                     value={formData.date}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border text-gray-800 border-gray-300 rounded-md"
                     required
                   />
                 </div>
@@ -1223,42 +1324,16 @@ export default function AgentForm() {
             </label>
           </div>
 
-
-
-          {/* Introducer Branch */}
-         <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Relationship Manager Branch (if any) *
-              </label>
-              <select
-                name="relationshipManagerBranch"
-                value={formData.relationshipManagerBranch}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-                required
-              >
-                <option value="">None</option>
-                <option value="Retail">Head Office</option>
-                <option value="Services">Abuja</option>
-                <option value="Hospitality">Victoria Island</option>
-                <option value="E-commerce">Enugu</option>
-                <option value="E-commerce">Aba</option>
-                <option value="E-commerce">Umuahia</option>
-               
-
-              </select>
-            </div>
-
           {/* Introducer Name */}
          <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-800 mb-1">
                 Relationship Manager (if any) *
               </label>
               <select
                 name="relationshipManager"
                 value={formData.relationshipManager}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-md"
                 required
               >
                 <option value="">None</option>
@@ -1291,6 +1366,33 @@ export default function AgentForm() {
               </select>
             </div>
 
+       {/* Introducer Branch */}
+           <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Relationship Manager Branch (if any) *
+              </label>
+              <select
+                name="relationshipManagerBranch"
+                value={formData.relationshipManagerBranch}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border text-gray-800 border-gray-300 rounded-md"
+                required
+              >
+                <option value="">None</option>
+                <option value="Retail">Head Office</option>
+                <option value="Services">Abuja</option>
+                <option value="Hospitality">Victoria Island</option>
+                <option value="E-commerce">Enugu</option>
+                <option value="E-commerce">Aba</option>
+                <option value="E-commerce">Umuahia</option>
+               
+
+              </select>
+            </div>
+
+
+
+
           {/* Submit Button */}
           <div className="mt-8 text-center">
             <button
@@ -1298,7 +1400,7 @@ export default function AgentForm() {
               disabled={isSubmitting}
               className="px-6 py-3 bg-[#0B3D3B] text-[#d7d8d4] font-medium rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'SUBMITTING...' : 'SUBMIT APPLICATION'}
+              {isSubmitting ? 'SUBMITTING...' : 'Submit Application'}
             </button>
           </div>
         </form>
