@@ -69,9 +69,15 @@ export const generateApplicationPDF = async (formData, fileNames) => {
         SECTION 3: FINANCIAL INFORMATION
       </h3>
       <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>Account Number:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.accountNumber || 'Not provided'}</td></tr>
+        <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>Account Name:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.accountName || 'Not provided'}</td></tr>
+        <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>Account Type:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.accountType || 'Not provided'}</td></tr>
         <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>Monthly Turnover:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">₦${formData.monthlyTurnover || 'Not provided'}</td></tr>
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Daily Cash Limit:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">₦${formData.dailyCashLimit || 'Not provided'}</td></tr>
-      </table>
+      <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>POS Terminals Needed:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.posTerminalsNeeded || 'Not provided'}</td></tr>
+      <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>Debit Consent:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.debitConsent || 'Not provided'}</td></tr>
+      <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>POS Features:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.posFeatures || 'Not provided'}</td></tr>
+        </table>
     </div>
     
     <div style="margin-bottom: 15px;">
@@ -95,7 +101,8 @@ export const generateApplicationPDF = async (formData, fileNames) => {
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>Signature:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${fileNames.signature ? 'Attached' : 'Not provided'}</td></tr>
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Date:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.date || 'Not provided'}</td></tr>
-        <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Introducer Name:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.introducerName || 'Not provided'}</td></tr>
+        <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Relationship Manager:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.relationshipManager || 'Not provided'}</td></tr>
+        <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Relationship Manager Branch:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.relationshipManagerBranch || 'Not provided'}</td></tr>
       </table>
     </div>
     
@@ -110,6 +117,9 @@ export const generateApplicationPDF = async (formData, fileNames) => {
       </table>
     </div>
     
+
+
+
     <div style="margin-top: 20px; font-size: 10px; color: #777; text-align: center;">
       <p>Application submitted on: ${new Date().toLocaleString()}</p>
       <p>© 2025 Olive Payment Solutions Limited. All rights reserved.</p>
@@ -203,9 +213,13 @@ export const generateMerchantPDF = async (formData, fileNames) => {
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>CAC Registration Number:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.cacRegNo || 'Not provided'}</td></tr>
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>TIN:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.tin || 'Not provided'}</td></tr>
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Nature of Business:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.natureOfBusiness || 'Not provided'}</td></tr>
+         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Existing POS Agent:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.existingAgent || 'Not provided'}</td></tr>
+        ${formData.existingAgent === 'YES' ? `<tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Current Bank/Provider:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.existingAgentBank || 'Not provided'}</td></tr>` : ''}
       </table>
     </div>
     
+
+
     <div style="margin-bottom: 15px;">
       <h3 style="font-size: 16px; border-bottom: 2px solid #0B3D3B; padding-bottom: 5px; color: #0B3D3B;">
         BUSINESS OWNER/REPRESENTATIVE DETAILS
@@ -224,7 +238,7 @@ export const generateMerchantPDF = async (formData, fileNames) => {
         BANK ACCOUNT INFORMATION
       </h3>
       <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>Bank Name:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.bankName || 'Not provided'}</td></tr>
+        <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>Bank Name:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.accountNumber || 'Not provided'}</td></tr>
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Account Name:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.accountName || 'Not provided'}</td></tr>
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Account Type:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.accountType || 'Not provided'}</td></tr>
       </table>
@@ -239,7 +253,8 @@ export const generateMerchantPDF = async (formData, fileNames) => {
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Monthly Transaction Volume:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">₦${formData.monthlyTransactionVolume || 'Not provided'}</td></tr>
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Average Transaction Size:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">₦${formData.averageTransactionSize || 'Not provided'}</td></tr>
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>POS Features:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.posFeatures.join(', ') || 'Not provided'}</td></tr>
-      </table>
+      <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>Debit Consent:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.debitConsent || 'Not provided'}</td></tr>
+        </table>
     </div>
     
     <div style="margin-bottom: 15px;">
@@ -275,7 +290,8 @@ export const generateMerchantPDF = async (formData, fileNames) => {
         <tr><td style="width: 40%; padding: 5px; border: 1px solid #ddd;"><strong>CAC Document:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${fileNames.cacDocument || 'Not provided'}</td></tr>
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>ID Document:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${fileNames.idDocument || 'Not provided'}</td></tr>
         <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Proof of Address:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${fileNames.proofOfAddress || 'Not provided'}</td></tr>
-        <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Bank Statement:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${fileNames.bankStatement || 'Not provided'}</td></tr>
+       <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Relationship Manager:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.relationshipManager || 'Not provided'}</td></tr>
+        <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Relationship Manager Branch:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${formData.relationshipManagerBranch || 'Not provided'}</td></tr>
       </table>
     </div>
     

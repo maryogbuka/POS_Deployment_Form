@@ -85,31 +85,25 @@ export async function POST(request) {
       Application submitted on: ${new Date().toLocaleString()}
     `;
 
+//  Build email object
+const msg = {
+  to: [
+    "popetimehin@olivepayment.com",
+    "it@olivemfb.com",
+    "samuel.francis@olivemfb.com",
+    "eutuama@olivepayment.com",
+    "ofavour@olivepayment.com",
+    "oobinna@olivepayment.com",
+    "eani@olivepayment.com",
+    "vike@olivepayment.com",
+  ],
+  from: "olivemfb.ng@gmail.com",
+  subject: "New Merchant POS Application",
+  text: emailContent,
+  html: emailContent.replace(/\n/g, "<br>"),
+};
 
-
-
-    // Email build section
-
-    const msg = {
-      to: [
-        "popetimehin@olivepayment.com",
-        "it@olivemfb.com",
-        "samuel.francis@olivemfb.com",
-        "eutuama@olivepayment.com",
-        "ofavour@olivepayment.com",
-        "oobinna@olivepayment.com",
-        "eani@olivepayment.com",
-        "vike@olivepayment.com",
-      ],
-      from: "olivemfb.ng@gmail.com",
-      subject: "New Merchant POS Application",
-      text: emailContent,
-      html: emailContent.replace(/\n/g, "<br>"),
-    };
-
-
-
-    // This is where we process attachments if they exist
+// Process attachments if they exist
 
     if (formData.attachments && formData.attachments.length > 0) {
       msg.attachments = formData.attachments.map(attachment => ({
