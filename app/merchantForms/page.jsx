@@ -247,8 +247,6 @@ export default function MerchantForm() {
           operatingPeriod: [],
           bankReferenceName: '',
           bankReferencePhone: '',
-          tradeReferenceName: '',
-          tradeReferencePhone: '',
           cacDocument: null,
           idDocument: null,
           proofOfAddress: null,
@@ -319,7 +317,54 @@ export default function MerchantForm() {
                   required
                 />
               </div>
+<<<<<<< HEAD
             
+              
+              {/* Business Address */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Address *
+                </label>
+                <textarea
+                  name="businessAddress"
+                  value={formData.businessAddress}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter business address"
+                  rows="3"
+                  required
+                ></textarea>
+              </div>
+              
+              {/* City/Town */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  City/Town *
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter city/town"
+=======
+           
+              {/* Trading Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Trading Name *
+                </label>
+                <input
+                  type="text"
+                  name="tradingName"
+                  value={formData.tradingName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter trading name"
+                  required
+                />
+              </div>
               
               {/* Business Address */}
               <div className="md:col-span-2">
@@ -521,6 +566,212 @@ export default function MerchantForm() {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
                   placeholder="Enter full name"
+>>>>>>> 06a90e2b9afd1e1215fa17a5c24a6b0dd37e3eb3
+                  required
+                />
+              </div>
+              
+<<<<<<< HEAD
+              {/* State */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  State *
+                </label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter state"
+                  required
+                />
+              </div>
+              
+              {/* L.G.A */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  L.G.A *
+                </label>
+                <input
+                  type="text"
+                  name="lga"
+                  value={formData.lga}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter Local Government Area"
+                  required
+                />
+              </div>
+              
+              {/* Business Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Phone Number *
+                </label>
+                <input
+                  type="number"
+                  name="businessPhone"
+                  value={formData.businessPhone}
+                  onChange={handleChange}
+                  maxLength={11}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter business phone number"
+=======
+              {/* Owner Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Title/Position *
+                </label>
+                <input
+                  type="text"
+                  name="ownerTitle"
+                  value={formData.ownerTitle}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter title/position"
+                  required
+                />
+              </div>
+             
+              {/* Owner Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number *
+                </label>
+                <input
+                  type="number"
+                  name="ownerPhone"
+                  value={formData.ownerPhone}
+                  onChange={handleChange}
+                  maxLength={11}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter phone number"
+>>>>>>> 06a90e2b9afd1e1215fa17a5c24a6b0dd37e3eb3
+                  required
+                />
+              </div>
+              
+<<<<<<< HEAD
+              {/* Business Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Email Address *
+                </label>
+                <input
+                  type="email"
+                  name="businessEmail"
+                  value={formData.businessEmail}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter business email"
+                  required
+                />
+              </div>
+              
+              {/* Business Website */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Website
+                </label>
+                <input
+                  type="text"
+                  name="businessWebsite"
+                  value={formData.businessWebsite}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter website URL"
+                />
+              </div>
+              
+              {/* Business Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Type *
+                </label>
+                <select
+                  name="businessType"
+                  value={formData.businessType}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-gray-700 border-gray-300 rounded-md"
+                  required
+                >
+                  <option value="">Select business type</option>
+                  <option value="Retail">Retail</option>
+                  <option value="Services">Services</option>
+                  <option value="Hospitality">Hospitality</option>
+                  <option value="E-commerce">E-commerce</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              
+              {/* CAC Registration Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  CAC Registration Number
+                </label>
+                <input
+                  type="text"
+                  name="cacRegNo"
+                  value={formData.cacRegNo}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter CAC registration number"
+                />
+              </div>
+              
+              {/* TIN */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  TIN (Tax Identification Number)
+                </label>
+                <input
+                  type="text"
+                  name="tin"
+                  value={formData.tin}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter TIN"
+                />
+              </div>
+              
+              {/* Nature of Business */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nature of Business *
+                </label>
+                <textarea
+                  name="natureOfBusiness"
+                  value={formData.natureOfBusiness}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Describe the nature of your business"
+                  rows="3"
+                  required
+                ></textarea>
+              </div>
+            </div>
+          </section>
+
+          {/* BUSINESS OWNER/REPRESENTATIVE DETAILS SECTION */}
+          <section className="border-b pb-6">
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
+              BUSINESS OWNER/REPRESENTATIVE DETAILS
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Owner Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  name="ownerName"
+                  value={formData.ownerName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter full name"
                   required
                 />
               </div>
@@ -591,6 +842,41 @@ export default function MerchantForm() {
                 />
               </div>
             </div>
+=======
+              {/* Owner ID Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ID Number *
+                </label>
+                <input
+                  type="number"
+                  name="ownerIdNo"
+                  value={formData.ownerIdNo}
+                  onChange={handleChange}
+                  maxLength={11}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter ID number"
+                  required
+                />
+              </div>
+              
+              {/* Owner Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  name="ownerEmail"
+                  value={formData.ownerEmail}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter email address"
+                  required
+                />
+              </div>
+            </div>
+>>>>>>> 06a90e2b9afd1e1215fa17a5c24a6b0dd37e3eb3
 
             {/* Business Owner Signature */}
             <div>
@@ -784,6 +1070,7 @@ export default function MerchantForm() {
                     />
                     <span className="ml-2 text-gray-700">Others (please specify)</span>
                   </div>
+<<<<<<< HEAD
                 </div>
 
               {/** This is where we render the existing agent input */}
@@ -817,6 +1104,8 @@ export default function MerchantForm() {
                     />
                     <span className="ml-2 text-gray-700">NO</span>
                   </label>
+=======
+>>>>>>> 06a90e2b9afd1e1215fa17a5c24a6b0dd37e3eb3
                 </div>
               </div>
 
@@ -839,6 +1128,7 @@ export default function MerchantForm() {
                 </div>
               )}
             </div>
+<<<<<<< HEAD
               </div>
                {/** Customer Debit Consent */}
          <div className="mb-4 pt-5">
@@ -880,6 +1170,104 @@ export default function MerchantForm() {
               POS LOCATION INFORMATION
             </h3>
             
+=======
+
+
+             {/** This is where we render the existing agent input */}
+              <div>
+                <label className="block text-sm pt-5 font-medium text-gray-700 mb-1">
+                  Are you currently a POS agent for another bank or provider? *
+                </label>
+                <div className="flex space-x-4 mt-2">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="existingAgent"
+                      value="YES"
+                      checked={formData.existingAgent === 'YES'}
+                      onChange={handleChange}
+                      className="text-green-600"
+                      required
+                    />
+
+                    {/** This is where we render the existing agent input */}
+                    <span className="ml-2 text-gray-700">YES</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="existingAgent"
+                      value="NO"
+                      checked={formData.existingAgent === 'NO'}
+                      onChange={handleChange}
+                      className="text-green-600"
+                    />
+                    <span className="ml-2 text-gray-700">NO</span>
+                  </label>
+                </div>
+              </div>
+
+
+              {/** This is where we render the existing agent input */}
+              {formData.existingAgent === 'YES' && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Which bank/provider are you currently working with? *
+                  </label>
+                  <input
+                    type="text"
+                    name="existingAgentBank"
+                    value={formData.existingAgentBank}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                    placeholder="Enter bank or provider name"
+                    required={formData.existingAgent === 'YES'}
+                  />
+                </div>
+              )}
+            
+
+            {/* Customer Debit Consent */}
+            <div className="mb-4 pt-5">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Do you authorize us to debit your account with the sum of <strong> ₦21,500</strong> for the POS purchase?
+              </label>
+              <div className="flex items-center space-x-4">
+                <label className="flex text-gray-700 items-center">
+                  <input
+                    type="radio"
+                    name="debitConsent"
+                    value="yes"
+                    checked={formData.debitConsent === "yes"}
+                    onChange={handleChange}
+                    className="mr-2"
+                    required
+                  />
+                  Yes
+                </label>
+                <label className="flex text-gray-700 items-center">
+                  <input
+                    type="radio"
+                    name="debitConsent"
+                    value="no"
+                    checked={formData.debitConsent === "no"}
+                    onChange={handleChange}
+                    className="mr-2"
+                    required
+                  />
+                  No
+                </label>
+              </div>
+            </div>
+          </section>
+
+          {/* LOCATION INFORMATION SECTION */}
+          <section className="border-b pb-6">
+            <h3 className="text-lg font-bold text-gray-700 mb-4">
+              LOCATION INFORMATION
+            </h3>
+            
+>>>>>>> 06a90e2b9afd1e1215fa17a5c24a6b0dd37e3eb3
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Primary Place of Usage */}
@@ -986,11 +1374,14 @@ export default function MerchantForm() {
                 </div>
               </div>
             </div>
+<<<<<<< HEAD
              <p className="overflow-hidden whitespace-nowrap mt-8">
             <span className="inline-block animate-marquee text-sm text-red-600">
               *** Please note: Following our <strong>Geofencing Policy</strong>, the location provided must be the designated service area. ***
             </span>
         </p>
+=======
+>>>>>>> 06a90e2b9afd1e1215fa17a5c24a6b0dd37e3eb3
           </section>
 
           {/* REFERENCES SECTION */}
@@ -1031,6 +1422,41 @@ export default function MerchantForm() {
                   required
                 />
               </div>
+<<<<<<< HEAD
+=======
+              
+              {/* Trade Reference Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Trade Reference Contact Name *
+                </label>
+                <input
+                  type="text"
+                  name="tradeReferenceName"
+                  value={formData.tradeReferenceName}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter trade reference name"
+                  required
+                />
+              </div>
+              
+              {/* Trade Reference Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Trade Reference Phone Number *
+                </label>
+                <input
+                  type="number"
+                  name="tradeReferencePhone"
+                  value={formData.tradeReferencePhone}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
+                  placeholder="Enter trade reference phone"
+                  required
+                />
+              </div>
+>>>>>>> 06a90e2b9afd1e1215fa17a5c24a6b0dd37e3eb3
             </div>
           </section>
 
@@ -1318,12 +1744,16 @@ export default function MerchantForm() {
                 <option value="E-commerce">Enugu</option>
                 <option value="E-commerce">Aba</option>
                 <option value="E-commerce">Umuahia</option>
+<<<<<<< HEAD
                 <option value="E-commerce">Ilorin</option>
                 <option value="E-commerce">Kano</option>
                 <option value="E-commerce">Ibadan</option>
                 <option value="E-commerce">Osun</option>
                 <option value="E-commerce">Port Harcourt</option>
                 <option value="E-commerce">Calabar</option>
+=======
+               
+>>>>>>> 06a90e2b9afd1e1215fa17a5c24a6b0dd37e3eb3
 
               </select>
             </div>
